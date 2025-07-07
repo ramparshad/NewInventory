@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -17,9 +18,8 @@ import androidx.navigation.navArgument
 import com.example.inventoryapp.data.AuthRepository
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.model.UserRole
-import com.example.inventoryapp.ui.screens.*
 import com.example.inventoryapp.model.InventoryViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.inventoryapp.ui.screens.*
 
 sealed class MainScreen(val route: String, val label: String, val icon: ImageVector) {
     object Inventory : MainScreen("inventory", "Inventory", Icons.AutoMirrored.Filled.List)
@@ -89,7 +89,7 @@ fun AppNavHost(
             composable(MainScreen.Inventory.route) {
                 showBottomBar = true
                 val inventoryViewModel: InventoryViewModel = viewModel(factory = InventoryViewModel.provideFactory(inventoryRepo, userRole))
-                InventoryScreen(navController, inventoryViewModel, inventoryRepo) // <-- FIXED: Pass inventoryRepo
+                InventoryScreen(navController, inventoryViewModel, inventoryRepo)
             }
             composable(MainScreen.Transaction.route) {
                 showBottomBar = true
@@ -101,7 +101,7 @@ fun AppNavHost(
                     AnalyticsScreen(inventoryRepo)
                 }
             }
-            // FIX: Transaction route takes type, serial, model as query params (all optional)
+            // Transaction screen with query params
             composable(
                 route = "transaction_screen?type={type}&serial={serial}&model={model}",
                 arguments = listOf(
@@ -125,7 +125,11 @@ fun AppNavHost(
             }
             composable(MainScreen.TransactionHistory.route) {
                 showBottomBar = true
-                TransactionHistoryScreen(inventoryRepo)
+                TransactionHistoryScreen(
+                    inventoryRepo = inventoryRepo,
+                    navController = navController,
+                    navToBarcodeScanner = { navController.navigate("barcode_scanner") }
+                )
             }
             composable("barcode_scanner") {
                 showBottomBar = false

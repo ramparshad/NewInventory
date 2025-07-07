@@ -11,12 +11,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.navigation.NavController
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.ui.components.TransactionHistoryCard
-import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -25,9 +29,12 @@ import java.util.*
 @Composable
 fun TransactionHistoryScreen(
     inventoryRepo: InventoryRepository,
+    navController: NavController? = null, // Pass navController if using navigation!
     navToBarcodeScanner: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
     var transactions by remember { mutableStateOf<List<Transaction>>(emptyList()) }
     var selectedTx by remember { mutableStateOf<Transaction?>(null) }
     var searchText by remember { mutableStateOf("") }
@@ -58,14 +65,28 @@ fun TransactionHistoryScreen(
         }
     }
 
+    // --- Barcode scan result handling ---
+    // Use a SavedStateHandle mechanism to receive scanned serial if navController is provided
+    if (navController != null) {
+        val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+        // Listen for scannedSerial result and update searchText
+        LaunchedEffect(savedStateHandle?.get<String>("scannedSerial")) {
+            val scannedSerial = savedStateHandle?.get<String>("scannedSerial")
+            if (!scannedSerial.isNullOrBlank()) {
+                searchText = scannedSerial
+                savedStateHandle.remove<String>("scannedSerial")
+            }
+        }
+    }
+
     // Filtering logic
     val filteredTx = transactions
         .filter { tx ->
             // Search text
             (searchText.isBlank() ||
-                (tx.serial?.contains(searchText, true) == true) ||
-                (tx.model?.contains(searchText, true) == true) ||
-                (tx.type?.contains(searchText, true) == true))
+                    (tx.serial?.contains(searchText, true) == true) ||
+                    (tx.model?.contains(searchText, true) == true) ||
+                    (tx.type?.contains(searchText, true) == true))
             // Sale type
             && (selectedSaleType == null || tx.type.equals(selectedSaleType, true))
             // Date
@@ -73,9 +94,9 @@ fun TransactionHistoryScreen(
             && (toDate == null || (tx.timestamp <= toDate!!.time))
             // Value
             && (valueRange == null || (
-                (tx.amount ?: 0.0) >= (valueRange?.first ?: 0.0) &&
-                (tx.amount ?: 0.0) <= (valueRange?.second ?: Double.MAX_VALUE))
-            )
+                    (tx.amount ?: 0.0) >= (valueRange?.first ?: 0.0) &&
+                    (tx.amount ?: 0.0) <= (valueRange?.second ?: Double.MAX_VALUE))
+                )
         }
         .let {
             when (sortBy) {
@@ -86,7 +107,7 @@ fun TransactionHistoryScreen(
             }
         }
 
-    // MAIN UI
+    // --- UI ---
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -103,7 +124,14 @@ fun TransactionHistoryScreen(
                     IconButton(onClick = { filterDialogVisible = true }) {
                         Icon(Icons.Default.FilterList, contentDescription = "Filter")
                     }
-                    IconButton(onClick = { navToBarcodeScanner?.invoke() }) {
+                    IconButton(onClick = {
+                        // If navToBarcodeScanner is provided, use it, else fallback to navController.navigate
+                        if (navToBarcodeScanner != null) {
+                            navToBarcodeScanner()
+                        } else if (navController != null) {
+                            navController.navigate("barcode_scanner")
+                        }
+                    }) {
                         Icon(Icons.Default.QrCodeScanner, contentDescription = "Barcode")
                     }
                     Box {
@@ -176,7 +204,7 @@ fun TransactionHistoryScreen(
                                 FilterChip(
                                     selected = selectedSaleType == type,
                                     onClick = { selectedSaleType = if (selectedSaleType == type) null else type },
-                                    label = { Text(type.capitalize()) },
+                                    label = { Text(type.replaceFirstChar { it.uppercase() }) },
                                     modifier = Modifier.padding(end = 4.dp)
                                 )
                             }
