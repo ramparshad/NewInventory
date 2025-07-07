@@ -2,24 +2,34 @@ package com.example.inventoryapp.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Size
+import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.*
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
+import com.google.mlkit.vision.barcode.Barcode
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BarcodeScannerScreen(
-    navController: NavController
-) {
+fun BarcodeScannerScreen(navController: NavController) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -32,56 +42,145 @@ fun BarcodeScannerScreen(
         hasCameraPermission = granted
     }
 
-    // Placeholder for scanned result (replace with your actual scanner integration)
-    var scanning by remember { mutableStateOf(false) }
-    var scanError by remember { mutableStateOf<String?>(null) }
-
     LaunchedEffect(Unit) {
         if (!hasCameraPermission) {
             permissionLauncher.launch(Manifest.permission.CAMERA)
-        } else {
-            scanning = true
         }
     }
 
-    fun onBarcodeScanned(result: String) {
-        navController.previousBackStackEntry?.savedStateHandle?.set("scannedSerial", result)
-        navController.popBackStack()
-    }
+    var scanResult by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var torchEnabled by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         when {
             !hasCameraPermission -> {
                 Text("Camera permission is required to scan barcodes.")
             }
-            scanning -> {
-                // Replace this Column with your camera/scanner composable!
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Pretend barcode scanner running...")
-                    Spacer(Modifier.height(16.dp))
-                    Button(onClick = {
-                        // Simulate a barcode scan result for testing
-                        onBarcodeScanned("SN1234567890")
-                    }) {
-                        Text("Simulate Scan (SN1234567890)")
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Button(onClick = { navController.popBackStack() }) {
-                        Text("Cancel")
+            else -> {
+                CameraPreview(
+                    onBarcodeScanned = { code ->
+                        if (scanResult == null) {
+                            scanResult = code
+                            navController.previousBackStackEntry?.savedStateHandle?.set("scannedSerial", code)
+                            navController.popBackStack()
+                        }
+                    },
+                    onError = { error = it },
+                    torchEnabled = torchEnabled,
+                    onTorchChanged = { torchEnabled = it },
+                    lifecycleOwner = lifecycleOwner
+                )
+
+                // Torch toggle and cancel button
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row {
+                        Button(onClick = { torchEnabled = !torchEnabled }) {
+                            Text(if (torchEnabled) "Torch Off" else "Torch On")
+                        }
+                        Spacer(Modifier.width(16.dp))
+                        Button(onClick = { navController.popBackStack() }) {
+                            Text("Cancel")
+                        }
                     }
                 }
-            }
-            scanError != null -> {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Error: $scanError", color = MaterialTheme.colorScheme.error)
-                    Button(onClick = { navController.popBackStack() }) {
-                        Text("Back")
-                    }
-                }
+                error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
             }
         }
     }
+}
+
+@Composable
+fun CameraPreview(
+    onBarcodeScanned: (String) -> Unit,
+    onError: (String) -> Unit,
+    torchEnabled: Boolean,
+    onTorchChanged: (Boolean) -> Unit,
+    lifecycleOwner: LifecycleOwner
+) {
+    val context = LocalContext.current
+    val previewView = remember { PreviewView(context) }
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    var camera: Camera? by remember { mutableStateOf(null) }
+
+    DisposableEffect(Unit) {
+        val cameraProvider = cameraProviderFuture.get()
+
+        val preview = Preview.Builder()
+            .setTargetResolution(Size(1280, 720))
+            .build().also {
+                it.setSurfaceProvider(previewView.surfaceProvider)
+            }
+
+        val barcodeScanner = BarcodeScanning.getClient()
+        val analysisUseCase = ImageAnalysis.Builder()
+            .setTargetResolution(Size(1280, 720))
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+
+        analysisUseCase.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
+            val mediaImage = imageProxy.image
+            if (mediaImage != null) {
+                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                barcodeScanner.process(image)
+                    .addOnSuccessListener { barcodes ->
+                        for (barcode in barcodes) {
+                            barcode.rawValue?.let { code ->
+                                onBarcodeScanned(code)
+                                break
+                            }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        onError(e.message ?: "Barcode scan failed")
+                    }
+                    .addOnCompleteListener {
+                        imageProxy.close()
+                    }
+            } else {
+                imageProxy.close()
+            }
+        }
+
+        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+        try {
+            cameraProvider.unbindAll()
+            camera = cameraProvider.bindToLifecycle(
+                lifecycleOwner, cameraSelector, preview, analysisUseCase
+            )
+            camera?.cameraControl?.enableTorch(torchEnabled)
+        } catch (e: Exception) {
+            onError(e.message ?: "Camera initialization failed")
+        }
+
+        onDispose {
+            cameraProvider.unbindAll()
+        }
+    }
+
+    // React to torch state changes
+    LaunchedEffect(torchEnabled) {
+        camera?.cameraControl?.enableTorch(torchEnabled)
+    }
+
+    AndroidView(
+        factory = {
+            previewView.apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        },
+        modifier = Modifier.fillMaxSize()
+    )
 }
