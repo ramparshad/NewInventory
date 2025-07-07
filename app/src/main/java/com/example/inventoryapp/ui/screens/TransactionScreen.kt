@@ -18,8 +18,6 @@ import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.model.UserRole
 import com.google.firebase.analytics.FirebaseAnalytics
-import androidx.compose.ui.text.input.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -164,14 +162,11 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Amount
+                // Amount (no keyboardOptions)
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
                     label = { Text("Amount") },
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        keyboardType = KeyboardType.Number
-                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
