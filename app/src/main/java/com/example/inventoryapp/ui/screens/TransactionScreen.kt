@@ -18,6 +18,8 @@ import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.model.UserRole
 import com.google.firebase.analytics.FirebaseAnalytics
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -137,7 +139,7 @@ fun TransactionScreen(
                     value = type,
                     onValueChange = { type = it },
                     label = { Text("Type") },
-                    enabled = userRole == UserRole.Admin || userRole == UserRole.Manager,
+                    enabled = userRole == UserRole.ADMIN || userRole == UserRole.MANAGER,
                     modifier = Modifier.fillMaxWidth()
                 )
 
