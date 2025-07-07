@@ -169,8 +169,8 @@ fun TransactionScreen(
                     value = amount,
                     onValueChange = { amount = it },
                     label = { Text("Amount") },
-                    keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions.Default.copy(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Number
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
