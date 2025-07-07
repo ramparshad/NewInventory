@@ -3,6 +3,7 @@ package com.example.inventoryapp.ui.components
 import android.app.DatePickerDialog
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
@@ -112,7 +113,7 @@ fun TransactionForm(
     var modelSuggestions by remember { mutableStateOf<List<String>>(emptyList()) }
     LaunchedEffect(model) {
         if (model.isNotBlank()) {
-            val models = inventoryRepo.getAllModels().toList() // Ensure it's a List
+            val models = inventoryRepo.getAllModels().toList()
             val suggestions = models.filter { it.contains(model, ignoreCase = true) }.take(5)
             modelSuggestions = suggestions
         } else {
@@ -124,8 +125,16 @@ fun TransactionForm(
     var bulkScanMode by remember { mutableStateOf(false) }
     val scannedSerials = remember { mutableStateListOf<String>() }
 
+    // FIXED: use PickVisualMediaRequest for the launcher!
     val imgPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         images = uris?.take(5) ?: emptyList()
+    }
+    val singleImgPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        uri?.let {
+            images = images + it
+        }
     }
 
     LaunchedEffect(savedState?.get<String>("scannedSerial")) {
@@ -412,18 +421,27 @@ fun TransactionForm(
             )
             quantityError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
-            // FIXED: pass proper input for PickMultipleVisualMedia contract
+            // FIXED: pass PickVisualMediaRequest for image picking
             Button(
                 onClick = {
-                    imgPicker.launch(
-                        ActivityResultContracts.PickVisualMedia.ImageOnly
-                    )
+                    singleImgPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = images.size < 5 && canEdit && !loading
             ) {
-                Text("Pick Images (max 5)")
+                Text("Pick Image")
             }
+
+            Button(
+                onClick = {
+                    imgPicker.launch(null) // For multiple images
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = images.size < 5 && canEdit && !loading
+            ) {
+                Text("Pick Multiple Images")
+            }
+
             if (images.isNotEmpty()) {
                 Column {
                     Text("Tap an image to remove")
