@@ -62,84 +62,101 @@ fun TransactionHistoryScreen(
             }
         }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Transaction History") }) }
-    ) { paddingValues ->
-        Column(Modifier.padding(paddingValues).fillMaxSize()) {
-            // Search bar
-            OutlinedTextField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                placeholder = { Text("Search history...") },
-                leadingIcon = { Icon(Icons.Default.Search, null) },
-                trailingIcon = {
-                    Row {
-                        IconButton(onClick = { filterDialogVisible = true }) {
-                            Icon(Icons.Default.FilterList, "Filter")
+    // Main content without a top bar
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 8.dp, vertical = 8.dp)
+    ) {
+        // Search bar at the very top, styled like InventoryScreen
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = { searchText = it },
+            placeholder = { Text("Search history...") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            trailingIcon = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { filterDialogVisible = true }) {
+                        Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                    }
+                    IconButton(onClick = { navToBarcodeScanner?.invoke() }) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = "Barcode")
+                    }
+                    Box {
+                        TextButton(onClick = { sortMenuExpanded = true }) {
+                            Text(sortBy)
                         }
-                        IconButton(onClick = { navToBarcodeScanner?.invoke() }) {
-                            Icon(Icons.Default.QrCodeScanner, "Barcode")
-                        }
-                        Box {
-                            TextButton(onClick = { sortMenuExpanded = true }) {
-                                Text(sortBy)
-                            }
-                            DropdownMenu(
-                                expanded = sortMenuExpanded,
-                                onDismissRequest = { sortMenuExpanded = false }
-                            ) {
-                                DropdownMenuItem(text = { Text("Date") }, onClick = {
-                                    sortBy = "Date"; sortMenuExpanded = false
-                                })
-                                DropdownMenuItem(text = { Text("Type") }, onClick = {
-                                    sortBy = "Type"; sortMenuExpanded = false
-                                })
-                                DropdownMenuItem(text = { Text("Amount") }, onClick = {
-                                    sortBy = "Amount"; sortMenuExpanded = false
-                                })
-                            }
+                        DropdownMenu(
+                            expanded = sortMenuExpanded,
+                            onDismissRequest = { sortMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Date") },
+                                onClick = {
+                                    sortBy = "Date"
+                                    sortMenuExpanded = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Type") },
+                                onClick = {
+                                    sortBy = "Type"
+                                    sortMenuExpanded = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Amount") },
+                                onClick = {
+                                    sortBy = "Amount"
+                                    sortMenuExpanded = false
+                                }
+                            )
                         }
                     }
-                },
-                modifier = Modifier.fillMaxWidth().padding(8.dp)
-            )
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+        )
 
-            if (filteredTx.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No transactions available.")
-                }
-            } else {
-                LazyColumn {
-                    items(filteredTx) { tx ->
-                        TransactionHistoryCard(
-                            transaction = tx,
-                            onClick = { selectedTx = tx }
-                        )
-                    }
-                }
+        Spacer(modifier = Modifier.height(4.dp))
+
+        if (filteredTx.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No transactions available.")
             }
-
-            if (filterDialogVisible) {
-                AlertDialog(
-                    onDismissRequest = { filterDialogVisible = false },
-                    title = { Text("Filter Options") },
-                    text = { Text("Add filter controls here") },
-                    confirmButton = {
-                        Button(onClick = { filterDialogVisible = false }) { Text("OK") }
-                    }
-                )
+        } else {
+            LazyColumn {
+                items(filteredTx) { tx ->
+                    TransactionHistoryCard(
+                        transaction = tx,
+                        onClick = { selectedTx = tx }
+                    )
+                }
             }
         }
-        // Transaction detail dialog
-        selectedTx?.let { tx ->
+
+        if (filterDialogVisible) {
             AlertDialog(
-                onDismissRequest = { selectedTx = null },
-                title = { Text("Transaction Details") },
-                text = { Text("Type: ${tx.type}\nModel: ${tx.model}\nSerial: ${tx.serial}\nAmount: ${tx.amount}\nDate: ${tx.date}\nDescription: ${tx.description ?: ""}") },
+                onDismissRequest = { filterDialogVisible = false },
+                title = { Text("Filter Options") },
+                text = { Text("Add filter controls here") },
                 confirmButton = {
-                    Button(onClick = { selectedTx = null }) { Text("Close") }
+                    Button(onClick = { filterDialogVisible = false }) { Text("OK") }
                 }
             )
         }
+    }
+    // Transaction detail dialog
+    selectedTx?.let { tx ->
+        AlertDialog(
+            onDismissRequest = { selectedTx = null },
+            title = { Text("Transaction Details") },
+            text = { Text("Type: ${tx.type}\nModel: ${tx.model}\nSerial: ${tx.serial}\nAmount: ${tx.amount}\nDate: ${tx.date}\nDescription: ${tx.description ?: ""}") },
+            confirmButton = {
+                Button(onClick = { selectedTx = null }) { Text("Close") }
+            }
+        )
     }
 }
