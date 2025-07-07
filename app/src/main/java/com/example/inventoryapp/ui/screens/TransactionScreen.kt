@@ -199,13 +199,19 @@ fun TransactionScreen(
                                 submitting = false
                                 return@launch
                             }
+                            val doubleAmount = amount.toDoubleOrNull()
+                            if (doubleAmount == null) {
+                                snackbarHostState.showSnackbar("Please enter a valid amount.")
+                                submitting = false
+                                return@launch
+                            }
                             val transaction = Transaction(
                                 type = type,
                                 serial = serial,
                                 model = model,
-                                amount = amount.toDoubleOrNull(),
+                                amount = doubleAmount, // guaranteed non-null Double
                                 date = date,
-                                description = if (description.isBlank()) null else description,
+                                description = description.ifBlank { "" }, // guaranteed non-null String
                                 timestamp = System.currentTimeMillis()
                             )
                             val result = inventoryRepo.addTransaction(serial, transaction)
@@ -217,7 +223,7 @@ fun TransactionScreen(
                                     putString("type", type)
                                     putString("serial", serial)
                                     putString("model", model)
-                                    putDouble("amount", amount.toDoubleOrNull() ?: 0.0)
+                                    putDouble("amount", doubleAmount)
                                     putString("date", date)
                                 }
                                 firebaseAnalytics.logEvent("transaction_created", bundle)
