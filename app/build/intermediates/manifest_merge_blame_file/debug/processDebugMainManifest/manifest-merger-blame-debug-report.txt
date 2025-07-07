@@ -1,0 +1,683 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.inventoryapp"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="21"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-permission android:name="android.permission.CAMERA" />
+11-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:30:5-64
+11-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:30:22-62
+12    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+12-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:31:5-79
+12-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:31:22-77
+13    <uses-permission
+13-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:32:5-33:37
+14        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+14-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:32:22-78
+15        android:maxSdkVersion="28" />
+15-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:33:9-35
+16    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+16-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:34:5-76
+16-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:34:22-73
+17    <uses-permission android:name="android.permission.WAKE_LOCK" />
+17-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:23:5-68
+17-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:23:22-65
+18    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+18-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:24:5-79
+18-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:24:22-76
+19    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+19-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:25:5-81
+19-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:25:22-78
+20    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+20-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:26:5-77
+20-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:26:22-74
+21    <uses-permission android:name="android.permission.INTERNET" />
+21-->[com.google.firebase:firebase-storage:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\0faa75da6683379b0f0380bb0338280a\transformed\jetified-firebase-storage-20.3.0\AndroidManifest.xml:24:5-67
+21-->[com.google.firebase:firebase-storage:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\0faa75da6683379b0f0380bb0338280a\transformed\jetified-firebase-storage-20.3.0\AndroidManifest.xml:24:22-64
+22    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+22-->[com.google.android.recaptcha:recaptcha:18.4.0] C:\Users\Dell\.gradle\caches\transforms-4\e5c5d3870837ea239b3c953af808bf68\transformed\jetified-recaptcha-18.4.0\AndroidManifest.xml:9:5-98
+22-->[com.google.android.recaptcha:recaptcha:18.4.0] C:\Users\Dell\.gradle\caches\transforms-4\e5c5d3870837ea239b3c953af808bf68\transformed\jetified-recaptcha-18.4.0\AndroidManifest.xml:9:22-95
+23
+24    <permission
+24-->[androidx.core:core:1.13.1] C:\Users\Dell\.gradle\caches\transforms-4\ff936e535bddcfbb878f207eed2699f6\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+25        android:name="com.example.inventoryapp.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+25-->[androidx.core:core:1.13.1] C:\Users\Dell\.gradle\caches\transforms-4\ff936e535bddcfbb878f207eed2699f6\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+26        android:protectionLevel="signature" />
+26-->[androidx.core:core:1.13.1] C:\Users\Dell\.gradle\caches\transforms-4\ff936e535bddcfbb878f207eed2699f6\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+27
+28    <uses-permission android:name="com.example.inventoryapp.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" /> <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
+28-->[androidx.core:core:1.13.1] C:\Users\Dell\.gradle\caches\transforms-4\ff936e535bddcfbb878f207eed2699f6\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+28-->[androidx.core:core:1.13.1] C:\Users\Dell\.gradle\caches\transforms-4\ff936e535bddcfbb878f207eed2699f6\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+29    <uses-feature
+29-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:25:5-27:36
+30        android:name="android.hardware.camera"
+30-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:26:9-47
+31        android:required="false" />
+31-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:27:9-33
+32    <uses-feature
+32-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:28:5-30:36
+33        android:name="android.hardware.camera.front"
+33-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:29:9-53
+34        android:required="false" /> <!-- TODO replace above two with next line after Android 4.2 -->
+34-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:30:9-33
+35    <!-- <uses-feature android:name="android.hardware.camera.any"/> -->
+36    <uses-feature
+36-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:33:5-35:36
+37        android:name="android.hardware.camera.autofocus"
+37-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:34:9-57
+38        android:required="false" />
+38-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:35:9-33
+39    <uses-feature
+39-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:36:5-38:36
+40        android:name="android.hardware.camera.flash"
+40-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:37:9-53
+41        android:required="false" />
+41-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:38:9-33
+42    <uses-feature
+42-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:39:5-41:36
+43        android:name="android.hardware.screen.landscape"
+43-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:40:9-57
+44        android:required="false" />
+44-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:41:9-33
+45    <uses-feature
+45-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:42:5-44:36
+46        android:name="android.hardware.wifi"
+46-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:43:9-45
+47        android:required="false" />
+47-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:44:9-33
+48
+49    <application
+49-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:2:5-28:19
+50        android:allowBackup="true"
+50-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:3:9-35
+51        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+51-->[androidx.core:core:1.13.1] C:\Users\Dell\.gradle\caches\transforms-4\ff936e535bddcfbb878f207eed2699f6\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+52        android:debuggable="true"
+53        android:extractNativeLibs="true"
+54        android:icon="@mipmap/ic_launcher"
+54-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:5:9-43
+55        android:label="@string/app_name"
+55-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:4:9-41
+56        android:roundIcon="@mipmap/ic_launcher_round"
+56-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:6:9-54
+57        android:supportsRtl="true"
+57-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:7:9-35
+58        android:theme="@style/Theme.InventoryApp" >
+58-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:8:9-50
+59        <provider
+60            android:name="androidx.core.content.FileProvider"
+60-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:11:13-62
+61            android:authorities="com.example.inventoryapp.provider"
+61-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:12:13-60
+62            android:exported="false"
+62-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:13:13-37
+63            android:grantUriPermissions="true" >
+63-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:14:13-47
+64            <meta-data
+64-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:15:13-17:54
+65                android:name="android.support.FILE_PROVIDER_PATHS"
+65-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:16:17-67
+66                android:resource="@xml/file_paths" />
+66-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:17:17-51
+67        </provider>
+68
+69        <activity
+69-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:20:9-27:20
+70            android:name="com.example.inventoryapp.MainActivity"
+70-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:21:13-41
+71            android:exported="true" >
+71-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:22:13-36
+72            <intent-filter>
+72-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:23:13-26:29
+73                <action android:name="android.intent.action.MAIN" />
+73-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:24:17-68
+73-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:24:25-66
+74
+75                <category android:name="android.intent.category.LAUNCHER" />
+75-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:25:17-76
+75-->C:\Users\Dell\Desktop\shivam\New-InventoryApp_FullProject\app\src\main\AndroidManifest.xml:25:27-74
+76            </intent-filter>
+77        </activity>
+78
+79        <service
+79-->[com.google.firebase:firebase-auth-ktx:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\5f86704b9cd0b664eb37836826fb3f0e\transformed\jetified-firebase-auth-ktx-22.3.1\AndroidManifest.xml:8:9-14:19
+80            android:name="com.google.firebase.components.ComponentDiscoveryService"
+80-->[com.google.firebase:firebase-auth-ktx:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\5f86704b9cd0b664eb37836826fb3f0e\transformed\jetified-firebase-auth-ktx-22.3.1\AndroidManifest.xml:9:13-84
+81            android:directBootAware="true"
+81-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:32:13-43
+82            android:exported="false" >
+82-->[com.google.firebase:firebase-auth-ktx:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\5f86704b9cd0b664eb37836826fb3f0e\transformed\jetified-firebase-auth-ktx-22.3.1\AndroidManifest.xml:10:13-37
+83            <meta-data
+83-->[com.google.firebase:firebase-auth-ktx:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\5f86704b9cd0b664eb37836826fb3f0e\transformed\jetified-firebase-auth-ktx-22.3.1\AndroidManifest.xml:11:13-13:85
+84                android:name="com.google.firebase.components:com.google.firebase.auth.ktx.FirebaseAuthLegacyRegistrar"
+84-->[com.google.firebase:firebase-auth-ktx:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\5f86704b9cd0b664eb37836826fb3f0e\transformed\jetified-firebase-auth-ktx-22.3.1\AndroidManifest.xml:12:17-119
+85                android:value="com.google.firebase.components.ComponentRegistrar" />
+85-->[com.google.firebase:firebase-auth-ktx:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\5f86704b9cd0b664eb37836826fb3f0e\transformed\jetified-firebase-auth-ktx-22.3.1\AndroidManifest.xml:13:17-82
+86            <meta-data
+86-->[com.google.firebase:firebase-storage-ktx:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\347435b28ab6b5e92d1db444e9d1719b\transformed\jetified-firebase-storage-ktx-20.3.0\AndroidManifest.xml:12:13-14:85
+87                android:name="com.google.firebase.components:com.google.firebase.storage.ktx.FirebaseStorageLegacyRegistrar"
+87-->[com.google.firebase:firebase-storage-ktx:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\347435b28ab6b5e92d1db444e9d1719b\transformed\jetified-firebase-storage-ktx-20.3.0\AndroidManifest.xml:13:17-125
+88                android:value="com.google.firebase.components.ComponentRegistrar" />
+88-->[com.google.firebase:firebase-storage-ktx:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\347435b28ab6b5e92d1db444e9d1719b\transformed\jetified-firebase-storage-ktx-20.3.0\AndroidManifest.xml:14:17-82
+89            <meta-data
+89-->[com.google.firebase:firebase-storage:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\0faa75da6683379b0f0380bb0338280a\transformed\jetified-firebase-storage-20.3.0\AndroidManifest.xml:30:13-32:85
+90                android:name="com.google.firebase.components:com.google.firebase.storage.FirebaseStorageKtxRegistrar"
+90-->[com.google.firebase:firebase-storage:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\0faa75da6683379b0f0380bb0338280a\transformed\jetified-firebase-storage-20.3.0\AndroidManifest.xml:31:17-118
+91                android:value="com.google.firebase.components.ComponentRegistrar" />
+91-->[com.google.firebase:firebase-storage:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\0faa75da6683379b0f0380bb0338280a\transformed\jetified-firebase-storage-20.3.0\AndroidManifest.xml:32:17-82
+92            <meta-data
+92-->[com.google.firebase:firebase-storage:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\0faa75da6683379b0f0380bb0338280a\transformed\jetified-firebase-storage-20.3.0\AndroidManifest.xml:33:13-35:85
+93                android:name="com.google.firebase.components:com.google.firebase.storage.StorageRegistrar"
+93-->[com.google.firebase:firebase-storage:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\0faa75da6683379b0f0380bb0338280a\transformed\jetified-firebase-storage-20.3.0\AndroidManifest.xml:34:17-107
+94                android:value="com.google.firebase.components.ComponentRegistrar" />
+94-->[com.google.firebase:firebase-storage:20.3.0] C:\Users\Dell\.gradle\caches\transforms-4\0faa75da6683379b0f0380bb0338280a\transformed\jetified-firebase-storage-20.3.0\AndroidManifest.xml:35:17-82
+95            <meta-data
+95-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:69:13-71:85
+96                android:name="com.google.firebase.components:com.google.firebase.auth.FirebaseAuthRegistrar"
+96-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:70:17-109
+97                android:value="com.google.firebase.components.ComponentRegistrar" />
+97-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:71:17-82
+98            <meta-data
+98-->[com.google.firebase:firebase-appcheck:17.1.2] C:\Users\Dell\.gradle\caches\transforms-4\f38e6b4e07c8e70a9cb8fba212fc5849\transformed\jetified-firebase-appcheck-17.1.2\AndroidManifest.xml:25:13-27:85
+99                android:name="com.google.firebase.components:com.google.firebase.appcheck.FirebaseAppCheckKtxRegistrar"
+99-->[com.google.firebase:firebase-appcheck:17.1.2] C:\Users\Dell\.gradle\caches\transforms-4\f38e6b4e07c8e70a9cb8fba212fc5849\transformed\jetified-firebase-appcheck-17.1.2\AndroidManifest.xml:26:17-120
+100                android:value="com.google.firebase.components.ComponentRegistrar" />
+100-->[com.google.firebase:firebase-appcheck:17.1.2] C:\Users\Dell\.gradle\caches\transforms-4\f38e6b4e07c8e70a9cb8fba212fc5849\transformed\jetified-firebase-appcheck-17.1.2\AndroidManifest.xml:27:17-82
+101            <meta-data
+101-->[com.google.firebase:firebase-appcheck:17.1.2] C:\Users\Dell\.gradle\caches\transforms-4\f38e6b4e07c8e70a9cb8fba212fc5849\transformed\jetified-firebase-appcheck-17.1.2\AndroidManifest.xml:28:13-30:85
+102                android:name="com.google.firebase.components:com.google.firebase.appcheck.FirebaseAppCheckRegistrar"
+102-->[com.google.firebase:firebase-appcheck:17.1.2] C:\Users\Dell\.gradle\caches\transforms-4\f38e6b4e07c8e70a9cb8fba212fc5849\transformed\jetified-firebase-appcheck-17.1.2\AndroidManifest.xml:29:17-117
+103                android:value="com.google.firebase.components.ComponentRegistrar" />
+103-->[com.google.firebase:firebase-appcheck:17.1.2] C:\Users\Dell\.gradle\caches\transforms-4\f38e6b4e07c8e70a9cb8fba212fc5849\transformed\jetified-firebase-appcheck-17.1.2\AndroidManifest.xml:30:17-82
+104            <meta-data
+104-->[com.google.firebase:firebase-common-ktx:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\b4d61cd8aabcaa0d62c0e5c86d6a365b\transformed\jetified-firebase-common-ktx-20.4.3\AndroidManifest.xml:12:13-14:85
+105                android:name="com.google.firebase.components:com.google.firebase.ktx.FirebaseCommonLegacyRegistrar"
+105-->[com.google.firebase:firebase-common-ktx:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\b4d61cd8aabcaa0d62c0e5c86d6a365b\transformed\jetified-firebase-common-ktx-20.4.3\AndroidManifest.xml:13:17-116
+106                android:value="com.google.firebase.components.ComponentRegistrar" />
+106-->[com.google.firebase:firebase-common-ktx:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\b4d61cd8aabcaa0d62c0e5c86d6a365b\transformed\jetified-firebase-common-ktx-20.4.3\AndroidManifest.xml:14:17-82
+107            <meta-data
+107-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:35:13-37:85
+108                android:name="com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar"
+108-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:36:17-109
+109                android:value="com.google.firebase.components.ComponentRegistrar" />
+109-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:37:17-82
+110        </service>
+111        <service
+111-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\fb1ef4423ca4323922420e8dc31429b6\transformed\jetified-camera-camera2-1.3.1\AndroidManifest.xml:24:9-33:19
+112            android:name="androidx.camera.core.impl.MetadataHolderService"
+112-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\fb1ef4423ca4323922420e8dc31429b6\transformed\jetified-camera-camera2-1.3.1\AndroidManifest.xml:25:13-75
+113            android:enabled="false"
+113-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\fb1ef4423ca4323922420e8dc31429b6\transformed\jetified-camera-camera2-1.3.1\AndroidManifest.xml:26:13-36
+114            android:exported="false" >
+114-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\fb1ef4423ca4323922420e8dc31429b6\transformed\jetified-camera-camera2-1.3.1\AndroidManifest.xml:27:13-37
+115            <meta-data
+115-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\fb1ef4423ca4323922420e8dc31429b6\transformed\jetified-camera-camera2-1.3.1\AndroidManifest.xml:30:13-32:89
+116                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
+116-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\fb1ef4423ca4323922420e8dc31429b6\transformed\jetified-camera-camera2-1.3.1\AndroidManifest.xml:31:17-103
+117                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
+117-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\fb1ef4423ca4323922420e8dc31429b6\transformed\jetified-camera-camera2-1.3.1\AndroidManifest.xml:32:17-86
+118        </service>
+119
+120        <provider
+120-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:29:9-37:20
+121            android:name="androidx.startup.InitializationProvider"
+121-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:30:13-67
+122            android:authorities="com.example.inventoryapp.androidx-startup"
+122-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:31:13-68
+123            android:exported="false" >
+123-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:32:13-37
+124            <meta-data
+124-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:34:13-36:52
+125                android:name="androidx.work.WorkManagerInitializer"
+125-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:35:17-68
+126                android:value="androidx.startup" />
+126-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:36:17-49
+127            <meta-data
+127-->[androidx.emoji2:emoji2:1.3.0] C:\Users\Dell\.gradle\caches\transforms-4\9b9e5917f914fb31dae751d3cf9c9235\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+128                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+128-->[androidx.emoji2:emoji2:1.3.0] C:\Users\Dell\.gradle\caches\transforms-4\9b9e5917f914fb31dae751d3cf9c9235\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:30:17-75
+129                android:value="androidx.startup" />
+129-->[androidx.emoji2:emoji2:1.3.0] C:\Users\Dell\.gradle\caches\transforms-4\9b9e5917f914fb31dae751d3cf9c9235\transformed\jetified-emoji2-1.3.0\AndroidManifest.xml:31:17-49
+130            <meta-data
+130-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\Dell\.gradle\caches\transforms-4\c620debaac4708949a073db4a559113b\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:29:13-31:52
+131                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+131-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\Dell\.gradle\caches\transforms-4\c620debaac4708949a073db4a559113b\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:30:17-78
+132                android:value="androidx.startup" />
+132-->[androidx.lifecycle:lifecycle-process:2.8.3] C:\Users\Dell\.gradle\caches\transforms-4\c620debaac4708949a073db4a559113b\transformed\jetified-lifecycle-process-2.8.3\AndroidManifest.xml:31:17-49
+133            <meta-data
+133-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+134                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+134-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+135                android:value="androidx.startup" />
+135-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+136        </provider>
+137
+138        <service
+138-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:39:9-45:35
+139            android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
+139-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:40:13-88
+140            android:directBootAware="false"
+140-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:41:13-44
+141            android:enabled="@bool/enable_system_alarm_service_default"
+141-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:42:13-72
+142            android:exported="false" />
+142-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:43:13-37
+143        <service
+143-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:46:9-52:35
+144            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+144-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:47:13-84
+145            android:directBootAware="false"
+145-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:48:13-44
+146            android:enabled="@bool/enable_system_job_service_default"
+146-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:49:13-70
+147            android:exported="true"
+147-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:50:13-36
+148            android:permission="android.permission.BIND_JOB_SERVICE" />
+148-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:51:13-69
+149        <service
+149-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:53:9-59:35
+150            android:name="androidx.work.impl.foreground.SystemForegroundService"
+150-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:54:13-81
+151            android:directBootAware="false"
+151-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:55:13-44
+152            android:enabled="@bool/enable_system_foreground_service_default"
+152-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:56:13-77
+153            android:exported="false" />
+153-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:57:13-37
+154
+155        <receiver
+155-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:61:9-66:35
+156            android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
+156-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:62:13-88
+157            android:directBootAware="false"
+157-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:63:13-44
+158            android:enabled="true"
+158-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:64:13-35
+159            android:exported="false" />
+159-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:65:13-37
+160        <receiver
+160-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:67:9-77:20
+161            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy"
+161-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:68:13-106
+162            android:directBootAware="false"
+162-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:69:13-44
+163            android:enabled="false"
+163-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:70:13-36
+164            android:exported="false" >
+164-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:71:13-37
+165            <intent-filter>
+165-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:73:13-76:29
+166                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+166-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:74:17-87
+166-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:74:25-84
+167                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+167-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:75:17-90
+167-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:75:25-87
+168            </intent-filter>
+169        </receiver>
+170        <receiver
+170-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:78:9-88:20
+171            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy"
+171-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:79:13-104
+172            android:directBootAware="false"
+172-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:80:13-44
+173            android:enabled="false"
+173-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:81:13-36
+174            android:exported="false" >
+174-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:82:13-37
+175            <intent-filter>
+175-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:84:13-87:29
+176                <action android:name="android.intent.action.BATTERY_OKAY" />
+176-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:85:17-77
+176-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:85:25-74
+177                <action android:name="android.intent.action.BATTERY_LOW" />
+177-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:86:17-76
+177-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:86:25-73
+178            </intent-filter>
+179        </receiver>
+180        <receiver
+180-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:89:9-99:20
+181            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy"
+181-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:90:13-104
+182            android:directBootAware="false"
+182-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:91:13-44
+183            android:enabled="false"
+183-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:92:13-36
+184            android:exported="false" >
+184-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:93:13-37
+185            <intent-filter>
+185-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:95:13-98:29
+186                <action android:name="android.intent.action.DEVICE_STORAGE_LOW" />
+186-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:96:17-83
+186-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:96:25-80
+187                <action android:name="android.intent.action.DEVICE_STORAGE_OK" />
+187-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:97:17-82
+187-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:97:25-79
+188            </intent-filter>
+189        </receiver>
+190        <receiver
+190-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:100:9-109:20
+191            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy"
+191-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:101:13-103
+192            android:directBootAware="false"
+192-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:102:13-44
+193            android:enabled="false"
+193-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:103:13-36
+194            android:exported="false" >
+194-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:104:13-37
+195            <intent-filter>
+195-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:106:13-108:29
+196                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+196-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:107:17-79
+196-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:107:25-76
+197            </intent-filter>
+198        </receiver>
+199        <receiver
+199-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:110:9-121:20
+200            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+200-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:111:13-88
+201            android:directBootAware="false"
+201-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:112:13-44
+202            android:enabled="false"
+202-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:113:13-36
+203            android:exported="false" >
+203-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:114:13-37
+204            <intent-filter>
+204-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:116:13-120:29
+205                <action android:name="android.intent.action.BOOT_COMPLETED" />
+205-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:117:17-79
+205-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:117:25-76
+206                <action android:name="android.intent.action.TIME_SET" />
+206-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:118:17-73
+206-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:118:25-70
+207                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+207-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:119:17-81
+207-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:119:25-78
+208            </intent-filter>
+209        </receiver>
+210        <receiver
+210-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:122:9-131:20
+211            android:name="androidx.work.impl.background.systemalarm.ConstraintProxyUpdateReceiver"
+211-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:123:13-99
+212            android:directBootAware="false"
+212-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:124:13-44
+213            android:enabled="@bool/enable_system_alarm_service_default"
+213-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:125:13-72
+214            android:exported="false" >
+214-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:126:13-37
+215            <intent-filter>
+215-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:128:13-130:29
+216                <action android:name="androidx.work.impl.background.systemalarm.UpdateProxies" />
+216-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:129:17-98
+216-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:129:25-95
+217            </intent-filter>
+218        </receiver>
+219        <receiver
+219-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:132:9-142:20
+220            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+220-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:133:13-78
+221            android:directBootAware="false"
+221-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:134:13-44
+222            android:enabled="true"
+222-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:135:13-35
+223            android:exported="true"
+223-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:136:13-36
+224            android:permission="android.permission.DUMP" >
+224-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:137:13-57
+225            <intent-filter>
+225-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:139:13-141:29
+226                <action android:name="androidx.work.diagnostics.REQUEST_DIAGNOSTICS" />
+226-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:140:17-88
+226-->[androidx.work:work-runtime:2.8.1] C:\Users\Dell\.gradle\caches\transforms-4\67b785abc61fc2232845db59a99cd92c\transformed\work-runtime-2.8.1\AndroidManifest.xml:140:25-85
+227            </intent-filter>
+228        </receiver>
+229
+230        <service
+230-->[androidx.room:room-runtime:2.5.2] C:\Users\Dell\.gradle\caches\transforms-4\354b73e75a56959b5b5d4965e0d55c2f\transformed\room-runtime-2.5.2\AndroidManifest.xml:24:9-28:63
+231            android:name="androidx.room.MultiInstanceInvalidationService"
+231-->[androidx.room:room-runtime:2.5.2] C:\Users\Dell\.gradle\caches\transforms-4\354b73e75a56959b5b5d4965e0d55c2f\transformed\room-runtime-2.5.2\AndroidManifest.xml:25:13-74
+232            android:directBootAware="true"
+232-->[androidx.room:room-runtime:2.5.2] C:\Users\Dell\.gradle\caches\transforms-4\354b73e75a56959b5b5d4965e0d55c2f\transformed\room-runtime-2.5.2\AndroidManifest.xml:26:13-43
+233            android:exported="false" />
+233-->[androidx.room:room-runtime:2.5.2] C:\Users\Dell\.gradle\caches\transforms-4\354b73e75a56959b5b5d4965e0d55c2f\transformed\room-runtime-2.5.2\AndroidManifest.xml:27:13-37
+234
+235        <activity
+235-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:29:9-46:20
+236            android:name="com.google.firebase.auth.internal.GenericIdpActivity"
+236-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:30:13-80
+237            android:excludeFromRecents="true"
+237-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:31:13-46
+238            android:exported="true"
+238-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:32:13-36
+239            android:launchMode="singleTask"
+239-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:33:13-44
+240            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+240-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:34:13-72
+241            <intent-filter>
+241-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:35:13-45:29
+242                <action android:name="android.intent.action.VIEW" />
+242-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:36:17-69
+242-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:36:25-66
+243
+244                <category android:name="android.intent.category.DEFAULT" />
+244-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:38:17-76
+244-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:38:27-73
+245                <category android:name="android.intent.category.BROWSABLE" />
+245-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:39:17-78
+245-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:39:27-75
+246
+247                <data
+247-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:41:17-44:51
+248                    android:host="firebase.auth"
+248-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:42:21-49
+249                    android:path="/"
+249-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:43:21-37
+250                    android:scheme="genericidp" />
+250-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:44:21-48
+251            </intent-filter>
+252        </activity>
+253        <activity
+253-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:47:9-64:20
+254            android:name="com.google.firebase.auth.internal.RecaptchaActivity"
+254-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:48:13-79
+255            android:excludeFromRecents="true"
+255-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:49:13-46
+256            android:exported="true"
+256-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:50:13-36
+257            android:launchMode="singleTask"
+257-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:51:13-44
+258            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+258-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:52:13-72
+259            <intent-filter>
+259-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:53:13-63:29
+260                <action android:name="android.intent.action.VIEW" />
+260-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:36:17-69
+260-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:36:25-66
+261
+262                <category android:name="android.intent.category.DEFAULT" />
+262-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:38:17-76
+262-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:38:27-73
+263                <category android:name="android.intent.category.BROWSABLE" />
+263-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:39:17-78
+263-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:39:27-75
+264
+265                <data
+265-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:41:17-44:51
+266                    android:host="firebase.auth"
+266-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:42:21-49
+267                    android:path="/"
+267-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:43:21-37
+268                    android:scheme="recaptcha" />
+268-->[com.google.firebase:firebase-auth:22.3.1] C:\Users\Dell\.gradle\caches\transforms-4\d517f42ce321cfc07a0fc459397b8a25\transformed\jetified-firebase-auth-22.3.1\AndroidManifest.xml:44:21-48
+269            </intent-filter>
+270        </activity>
+271
+272        <provider
+272-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:23:9-28:39
+273            android:name="com.google.firebase.provider.FirebaseInitProvider"
+273-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:24:13-77
+274            android:authorities="com.example.inventoryapp.firebaseinitprovider"
+274-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:25:13-72
+275            android:directBootAware="true"
+275-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:26:13-43
+276            android:exported="false"
+276-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:27:13-37
+277            android:initOrder="100" />
+277-->[com.google.firebase:firebase-common:20.4.3] C:\Users\Dell\.gradle\caches\transforms-4\5f38b1cc85b781baebf3897d4c7f5797\transformed\jetified-firebase-common-20.4.3\AndroidManifest.xml:28:13-36
+278
+279        <service
+279-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\Dell\.gradle\caches\transforms-4\25e96e52823a998a72eca04656cbaafd\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:9:9-15:19
+280            android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"
+280-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\Dell\.gradle\caches\transforms-4\25e96e52823a998a72eca04656cbaafd\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:10:13-91
+281            android:directBootAware="true"
+281-->[com.google.mlkit:common:18.9.0] C:\Users\Dell\.gradle\caches\transforms-4\ca864b07d6ef7858f05c9d5d46d7d608\transformed\jetified-common-18.9.0\AndroidManifest.xml:17:13-43
+282            android:exported="false" >
+282-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\Dell\.gradle\caches\transforms-4\25e96e52823a998a72eca04656cbaafd\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:11:13-37
+283            <meta-data
+283-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\Dell\.gradle\caches\transforms-4\25e96e52823a998a72eca04656cbaafd\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:12:13-14:85
+284                android:name="com.google.firebase.components:com.google.mlkit.vision.barcode.internal.BarcodeRegistrar"
+284-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\Dell\.gradle\caches\transforms-4\25e96e52823a998a72eca04656cbaafd\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:13:17-120
+285                android:value="com.google.firebase.components.ComponentRegistrar" />
+285-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0] C:\Users\Dell\.gradle\caches\transforms-4\25e96e52823a998a72eca04656cbaafd\transformed\jetified-play-services-mlkit-barcode-scanning-18.3.0\AndroidManifest.xml:14:17-82
+286            <meta-data
+286-->[com.google.mlkit:vision-common:17.3.0] C:\Users\Dell\.gradle\caches\transforms-4\2977effd0cbedcbdece49a964c31edfa\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:12:13-14:85
+287                android:name="com.google.firebase.components:com.google.mlkit.vision.common.internal.VisionCommonRegistrar"
+287-->[com.google.mlkit:vision-common:17.3.0] C:\Users\Dell\.gradle\caches\transforms-4\2977effd0cbedcbdece49a964c31edfa\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:13:17-124
+288                android:value="com.google.firebase.components.ComponentRegistrar" />
+288-->[com.google.mlkit:vision-common:17.3.0] C:\Users\Dell\.gradle\caches\transforms-4\2977effd0cbedcbdece49a964c31edfa\transformed\jetified-vision-common-17.3.0\AndroidManifest.xml:14:17-82
+289            <meta-data
+289-->[com.google.mlkit:common:18.9.0] C:\Users\Dell\.gradle\caches\transforms-4\ca864b07d6ef7858f05c9d5d46d7d608\transformed\jetified-common-18.9.0\AndroidManifest.xml:20:13-22:85
+290                android:name="com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar"
+290-->[com.google.mlkit:common:18.9.0] C:\Users\Dell\.gradle\caches\transforms-4\ca864b07d6ef7858f05c9d5d46d7d608\transformed\jetified-common-18.9.0\AndroidManifest.xml:21:17-120
+291                android:value="com.google.firebase.components.ComponentRegistrar" />
+291-->[com.google.mlkit:common:18.9.0] C:\Users\Dell\.gradle\caches\transforms-4\ca864b07d6ef7858f05c9d5d46d7d608\transformed\jetified-common-18.9.0\AndroidManifest.xml:22:17-82
+292        </service>
+293
+294        <provider
+294-->[com.google.mlkit:common:18.9.0] C:\Users\Dell\.gradle\caches\transforms-4\ca864b07d6ef7858f05c9d5d46d7d608\transformed\jetified-common-18.9.0\AndroidManifest.xml:9:9-13:38
+295            android:name="com.google.mlkit.common.internal.MlKitInitProvider"
+295-->[com.google.mlkit:common:18.9.0] C:\Users\Dell\.gradle\caches\transforms-4\ca864b07d6ef7858f05c9d5d46d7d608\transformed\jetified-common-18.9.0\AndroidManifest.xml:10:13-78
+296            android:authorities="com.example.inventoryapp.mlkitinitprovider"
+296-->[com.google.mlkit:common:18.9.0] C:\Users\Dell\.gradle\caches\transforms-4\ca864b07d6ef7858f05c9d5d46d7d608\transformed\jetified-common-18.9.0\AndroidManifest.xml:11:13-69
+297            android:exported="false"
+297-->[com.google.mlkit:common:18.9.0] C:\Users\Dell\.gradle\caches\transforms-4\ca864b07d6ef7858f05c9d5d46d7d608\transformed\jetified-common-18.9.0\AndroidManifest.xml:12:13-37
+298            android:initOrder="99" />
+298-->[com.google.mlkit:common:18.9.0] C:\Users\Dell\.gradle\caches\transforms-4\ca864b07d6ef7858f05c9d5d46d7d608\transformed\jetified-common-18.9.0\AndroidManifest.xml:13:13-35
+299
+300        <activity
+300-->[com.google.android.gms:play-services-base:18.1.0] C:\Users\Dell\.gradle\caches\transforms-4\38d2515b03462907f0e42f3029b0b1c9\transformed\jetified-play-services-base-18.1.0\AndroidManifest.xml:20:9-22:45
+301            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+301-->[com.google.android.gms:play-services-base:18.1.0] C:\Users\Dell\.gradle\caches\transforms-4\38d2515b03462907f0e42f3029b0b1c9\transformed\jetified-play-services-base-18.1.0\AndroidManifest.xml:20:19-85
+302            android:exported="false"
+302-->[com.google.android.gms:play-services-base:18.1.0] C:\Users\Dell\.gradle\caches\transforms-4\38d2515b03462907f0e42f3029b0b1c9\transformed\jetified-play-services-base-18.1.0\AndroidManifest.xml:22:19-43
+303            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+303-->[com.google.android.gms:play-services-base:18.1.0] C:\Users\Dell\.gradle\caches\transforms-4\38d2515b03462907f0e42f3029b0b1c9\transformed\jetified-play-services-base-18.1.0\AndroidManifest.xml:21:19-78
+304
+305        <meta-data
+305-->[com.google.android.gms:play-services-basement:18.3.0] C:\Users\Dell\.gradle\caches\transforms-4\08f7ff4f123d6e7c0de451b374009123\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:21:9-23:69
+306            android:name="com.google.android.gms.version"
+306-->[com.google.android.gms:play-services-basement:18.3.0] C:\Users\Dell\.gradle\caches\transforms-4\08f7ff4f123d6e7c0de451b374009123\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:22:13-58
+307            android:value="@integer/google_play_services_version" />
+307-->[com.google.android.gms:play-services-basement:18.3.0] C:\Users\Dell\.gradle\caches\transforms-4\08f7ff4f123d6e7c0de451b374009123\transformed\jetified-play-services-basement-18.3.0\AndroidManifest.xml:23:13-66
+308
+309        <activity
+309-->[androidx.compose.ui:ui-test-manifest:1.7.0] C:\Users\Dell\.gradle\caches\transforms-4\e9ec0668ecf11dc968da9170bf9adc6d\transformed\jetified-ui-test-manifest-1.7.0\AndroidManifest.xml:23:9-25:39
+310            android:name="androidx.activity.ComponentActivity"
+310-->[androidx.compose.ui:ui-test-manifest:1.7.0] C:\Users\Dell\.gradle\caches\transforms-4\e9ec0668ecf11dc968da9170bf9adc6d\transformed\jetified-ui-test-manifest-1.7.0\AndroidManifest.xml:24:13-63
+311            android:exported="true" />
+311-->[androidx.compose.ui:ui-test-manifest:1.7.0] C:\Users\Dell\.gradle\caches\transforms-4\e9ec0668ecf11dc968da9170bf9adc6d\transformed\jetified-ui-test-manifest-1.7.0\AndroidManifest.xml:25:13-36
+312        <activity
+312-->[androidx.compose.ui:ui-tooling-android:1.7.0] C:\Users\Dell\.gradle\caches\transforms-4\105f0cfbd76bc9a6f237d0f4c9b50c75\transformed\jetified-ui-tooling-release\AndroidManifest.xml:23:9-25:39
+313            android:name="androidx.compose.ui.tooling.PreviewActivity"
+313-->[androidx.compose.ui:ui-tooling-android:1.7.0] C:\Users\Dell\.gradle\caches\transforms-4\105f0cfbd76bc9a6f237d0f4c9b50c75\transformed\jetified-ui-tooling-release\AndroidManifest.xml:24:13-71
+314            android:exported="true" />
+314-->[androidx.compose.ui:ui-tooling-android:1.7.0] C:\Users\Dell\.gradle\caches\transforms-4\105f0cfbd76bc9a6f237d0f4c9b50c75\transformed\jetified-ui-tooling-release\AndroidManifest.xml:25:13-36
+315
+316        <service
+316-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\Dell\.gradle\caches\transforms-4\4586781bb5e86cc94a9d4e276e8c40f9\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:29:9-35:19
+317            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+317-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\Dell\.gradle\caches\transforms-4\4586781bb5e86cc94a9d4e276e8c40f9\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:30:13-103
+318            android:exported="false" >
+318-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\Dell\.gradle\caches\transforms-4\4586781bb5e86cc94a9d4e276e8c40f9\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:31:13-37
+319            <meta-data
+319-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\Dell\.gradle\caches\transforms-4\4586781bb5e86cc94a9d4e276e8c40f9\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:32:13-34:39
+320                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+320-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\Dell\.gradle\caches\transforms-4\4586781bb5e86cc94a9d4e276e8c40f9\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:33:17-94
+321                android:value="cct" />
+321-->[com.google.android.datatransport:transport-backend-cct:2.3.3] C:\Users\Dell\.gradle\caches\transforms-4\4586781bb5e86cc94a9d4e276e8c40f9\transformed\jetified-transport-backend-cct-2.3.3\AndroidManifest.xml:34:17-36
+322        </service>
+323        <service
+323-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\Dell\.gradle\caches\transforms-4\ad26dd345d2ead9e915ffb93728efedf\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:26:9-30:19
+324            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+324-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\Dell\.gradle\caches\transforms-4\ad26dd345d2ead9e915ffb93728efedf\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:27:13-117
+325            android:exported="false"
+325-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\Dell\.gradle\caches\transforms-4\ad26dd345d2ead9e915ffb93728efedf\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:28:13-37
+326            android:permission="android.permission.BIND_JOB_SERVICE" >
+326-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\Dell\.gradle\caches\transforms-4\ad26dd345d2ead9e915ffb93728efedf\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:29:13-69
+327        </service>
+328
+329        <receiver
+329-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\Dell\.gradle\caches\transforms-4\ad26dd345d2ead9e915ffb93728efedf\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:32:9-34:40
+330            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+330-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\Dell\.gradle\caches\transforms-4\ad26dd345d2ead9e915ffb93728efedf\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:33:13-132
+331            android:exported="false" />
+331-->[com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\Dell\.gradle\caches\transforms-4\ad26dd345d2ead9e915ffb93728efedf\transformed\jetified-transport-runtime-2.2.6\AndroidManifest.xml:34:13-37
+332        <receiver
+332-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+333            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+333-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+334            android:directBootAware="false"
+334-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+335            android:enabled="true"
+335-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+336            android:exported="true"
+336-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+337            android:permission="android.permission.DUMP" >
+337-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+338            <intent-filter>
+338-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+339                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+339-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+339-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+340            </intent-filter>
+341            <intent-filter>
+341-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+342                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+342-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+342-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+343            </intent-filter>
+344            <intent-filter>
+344-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+345                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+345-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+345-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+346            </intent-filter>
+347            <intent-filter>
+347-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+348                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+348-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+348-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Dell\.gradle\caches\transforms-4\59618f4d6085e80d50b7edff051d13d5\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
+349            </intent-filter>
+350        </receiver>
+351
+352        <activity
+352-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:47:9-53:63
+353            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+353-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:48:13-74
+354            android:clearTaskOnLaunch="true"
+354-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:49:13-45
+355            android:screenOrientation="sensorLandscape"
+355-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:50:13-56
+356            android:stateNotNeeded="true"
+356-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:51:13-42
+357            android:theme="@style/zxing_CaptureTheme"
+357-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:52:13-54
+358            android:windowSoftInputMode="stateAlwaysHidden" />
+358-->[com.journeyapps:zxing-android-embedded:4.3.0] C:\Users\Dell\.gradle\caches\transforms-4\bb32ae867e256f4d2038fdc00fde38a6\transformed\jetified-zxing-android-embedded-4.3.0\AndroidManifest.xml:53:13-60
+359    </application>
+360
+361</manifest>
