@@ -114,6 +114,7 @@ fun TransactionForm(
         if (model.isNotBlank()) {
             val models = inventoryRepo.getAllModels().toList() // Ensure it's a List
             val suggestions = models.filter { it.contains(model, ignoreCase = true) }.take(5)
+            modelSuggestions = suggestions
         } else {
             modelSuggestions = emptyList()
         }
@@ -411,8 +412,13 @@ fun TransactionForm(
             )
             quantityError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
+            // FIXED: pass proper input for PickMultipleVisualMedia contract
             Button(
-                onClick = { imgPicker.launch(null) },
+                onClick = {
+                    imgPicker.launch(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = images.size < 5 && canEdit && !loading
             ) {
