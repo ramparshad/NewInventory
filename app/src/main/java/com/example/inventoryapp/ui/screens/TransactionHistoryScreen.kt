@@ -18,6 +18,8 @@ import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.ui.components.TransactionHistoryCard
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +37,17 @@ fun TransactionHistoryScreen(
     val scope = rememberCoroutineScope()
     var error by remember { mutableStateOf<String?>(null) }
 
+    // Filter state
+    var selectedSaleType by remember { mutableStateOf<String?>(null) }
+    var fromDate by remember { mutableStateOf<Date?>(null) }
+    var toDate by remember { mutableStateOf<Date?>(null) }
+    var valueRange by remember { mutableStateOf<Pair<Double?, Double?>?>(null) }
+
+    // Date pickers state
+    var fromDateString by remember { mutableStateOf("") }
+    var toDateString by remember { mutableStateOf("") }
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+
     // Load transactions
     LaunchedEffect(Unit) {
         val result = inventoryRepo.getAllTransactions()
@@ -45,13 +58,24 @@ fun TransactionHistoryScreen(
         }
     }
 
-    // Apply search, filter, sort
+    // Filtering logic
     val filteredTx = transactions
         .filter { tx ->
-            searchText.isBlank() ||
+            // Search text
+            (searchText.isBlank() ||
                 (tx.serial?.contains(searchText, true) == true) ||
                 (tx.model?.contains(searchText, true) == true) ||
-                (tx.type?.contains(searchText, true) == true)
+                (tx.type?.contains(searchText, true) == true))
+            // Sale type
+            && (selectedSaleType == null || tx.type.equals(selectedSaleType, true))
+            // Date
+            && (fromDate == null || (tx.timestamp >= fromDate!!.time))
+            && (toDate == null || (tx.timestamp <= toDate!!.time))
+            // Value
+            && (valueRange == null || (
+                (tx.amount ?: 0.0) >= (valueRange?.first ?: 0.0) &&
+                (tx.amount ?: 0.0) <= (valueRange?.second ?: Double.MAX_VALUE))
+            )
         }
         .let {
             when (sortBy) {
@@ -62,13 +86,13 @@ fun TransactionHistoryScreen(
             }
         }
 
-    // Main content without a top bar
+    // MAIN UI
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 8.dp, vertical = 8.dp)
     ) {
-        // Search bar at the very top, styled like InventoryScreen
+        // Search bar
         OutlinedTextField(
             value = searchText,
             onValueChange = { searchText = it },
@@ -137,23 +161,114 @@ fun TransactionHistoryScreen(
             }
         }
 
+        // Filter dialog
         if (filterDialogVisible) {
             AlertDialog(
                 onDismissRequest = { filterDialogVisible = false },
                 title = { Text("Filter Options") },
-                text = { Text("Add filter controls here") },
+                text = {
+                    Column {
+                        // Sale type
+                        Text("Sale Type")
+                        val saleTypes = listOf("sale", "purchase", "return", "repair")
+                        Row {
+                            saleTypes.forEach { type ->
+                                FilterChip(
+                                    selected = selectedSaleType == type,
+                                    onClick = { selectedSaleType = if (selectedSaleType == type) null else type },
+                                    label = { Text(type.capitalize()) },
+                                    modifier = Modifier.padding(end = 4.dp)
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+
+                        // Date range
+                        Text("Date Range")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedTextField(
+                                value = fromDateString,
+                                onValueChange = {
+                                    fromDateString = it
+                                    fromDate = try { dateFormat.parse(it) } catch (_: Exception) { null }
+                                },
+                                label = { Text("From (yyyy-MM-dd)") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            OutlinedTextField(
+                                value = toDateString,
+                                onValueChange = {
+                                    toDateString = it
+                                    toDate = try { dateFormat.parse(it) } catch (_: Exception) { null }
+                                },
+                                label = { Text("To (yyyy-MM-dd)") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+
+                        // Value range
+                        Text("Value Range")
+                        val ranges = listOf(
+                            Pair(null, 5000.0) to "<5000",
+                            Pair(5000.0, 10000.0) to "5000-10000",
+                            Pair(10000.0, 20000.0) to "10000-20000",
+                            Pair(20000.0, 30000.0) to "20000-30000",
+                            Pair(30000.0, 45000.0) to "30000-45000",
+                            Pair(45000.0, null) to "above 45000"
+                        )
+                        Row {
+                            ranges.forEach { (range, label) ->
+                                FilterChip(
+                                    selected = valueRange == range,
+                                    onClick = {
+                                        valueRange = if (valueRange == range) null else range
+                                    },
+                                    label = { Text(label) },
+                                    modifier = Modifier.padding(end = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                },
                 confirmButton = {
                     Button(onClick = { filterDialogVisible = false }) { Text("OK") }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        selectedSaleType = null
+                        fromDate = null
+                        toDate = null
+                        fromDateString = ""
+                        toDateString = ""
+                        valueRange = null
+                        filterDialogVisible = false
+                    }) {
+                        Text("Clear")
+                    }
                 }
             )
         }
     }
+
     // Transaction detail dialog
     selectedTx?.let { tx ->
         AlertDialog(
             onDismissRequest = { selectedTx = null },
             title = { Text("Transaction Details") },
-            text = { Text("Type: ${tx.type}\nModel: ${tx.model}\nSerial: ${tx.serial}\nAmount: ${tx.amount}\nDate: ${tx.date}\nDescription: ${tx.description ?: ""}") },
+            text = {
+                Text(
+                    "Type: ${tx.type}\n" +
+                    "Model: ${tx.model}\n" +
+                    "Serial: ${tx.serial}\n" +
+                    "Amount: ${tx.amount}\n" +
+                    "Date: ${tx.date}\n" +
+                    "Description: ${tx.description ?: ""}"
+                )
+            },
             confirmButton = {
                 Button(onClick = { selectedTx = null }) { Text("Close") }
             }

@@ -63,6 +63,13 @@ fun InventoryScreen(
         }
     }
 
+    // Always reload data if blank and not loading
+    LaunchedEffect(inventory, loading) {
+        if (inventory.isEmpty() && !loading) {
+            viewModel.loadInventory()
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
@@ -134,12 +141,17 @@ fun InventoryScreen(
             }
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (loading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            when {
+                loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            } else {
-                LazyColumn {
+                error != null -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(error ?: "Unknown error", color = MaterialTheme.colorScheme.error)
+                }
+                inventory.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No inventory items found.")
+                }
+                else -> LazyColumn {
                     items(inventory) { item ->
                         InventoryCard(
                             item = item,
