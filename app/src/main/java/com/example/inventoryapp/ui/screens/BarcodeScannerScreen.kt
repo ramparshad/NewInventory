@@ -10,11 +10,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-
-// Assume you use MLKit or ZXing for barcode scanning.
-// Here is a placeholder Compose screen that handles permission and returns result.
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +45,6 @@ fun BarcodeScannerScreen(
     }
 
     fun onBarcodeScanned(result: String) {
-        // Pass result back to previous screen using SavedStateHandle
         navController.previousBackStackEntry?.savedStateHandle?.set("scannedSerial", result)
         navController.popBackStack()
     }
