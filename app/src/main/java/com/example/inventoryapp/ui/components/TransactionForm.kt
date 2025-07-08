@@ -421,22 +421,22 @@ fun TransactionForm(
             quantityError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
             // For single image picker (optional)
-            Button(
-                onClick = {
-                    singleImgPicker.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = images.size < 5 && canEdit && !loading
-            ) {
-                Text("Pick Image")
-            }
+            //Button(
+            //    onClick = {
+            //        singleImgPicker.launch(
+            //            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            //        )
+            //    },
+            //    modifier = Modifier.fillMaxWidth(),
+            //    enabled = images.size < 5 && canEdit && !loading
+            //) {
+            //    Text("Pick Image")
+            //}
 
             // For multiple image picker, FIX: must launch with null input
             Button(
                 onClick = {
-                    imgPicker.launch(null) // <-- CORRECT way for PickMultipleVisualMedia
+					imgPicker.launch(PickVisualMediaRequest())
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = images.size < 5 && canEdit && !loading
