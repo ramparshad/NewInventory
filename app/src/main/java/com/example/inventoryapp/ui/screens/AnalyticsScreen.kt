@@ -20,6 +20,8 @@ import com.example.inventoryapp.model.Transaction
 import com.google.firebase.analytics.FirebaseAnalytics
 import androidx.compose.ui.platform.LocalContext
 import android.os.Bundle
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,14 +63,18 @@ fun AnalyticsScreen(inventoryRepo: InventoryRepository) {
         firebaseAnalytics.logEvent("analytics_filter_changed", bundle)
     }
 
-    // Filtering logic
+    // Filtering logic (FIXED to compare Longs)
+    val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val startDateLong = startDate.takeIf { it.isNotBlank() }?.let { sdf.parse(it)?.time } ?: Long.MIN_VALUE
+    val endDateLong = endDate.takeIf { it.isNotBlank() }?.let { sdf.parse(it)?.time } ?: Long.MAX_VALUE
+
     val filtered = transactions.filter { tx ->
         (selectedType == "All" || tx.type.equals(selectedType, ignoreCase = true)) &&
         (selectedModel == "All" || (tx.model?.equals(selectedModel, ignoreCase = true) == true)) &&
         (minAmount.toDoubleOrNull()?.let { tx.amount >= it } ?: true) &&
         (maxAmount.toDoubleOrNull()?.let { tx.amount <= it } ?: true) &&
-        (startDate.isBlank() || tx.date >= startDate) &&
-        (endDate.isBlank() || tx.date <= endDate)
+        (tx.date >= startDateLong) &&
+        (tx.date <= endDateLong)
     }
 
     // Totals by type for visuals

@@ -19,6 +19,8 @@ import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.model.UserRole
 import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -174,7 +176,7 @@ fun TransactionScreen(
                 OutlinedTextField(
                     value = date,
                     onValueChange = { date = it },
-                    label = { Text("Date") },
+                    label = { Text("Date (yyyy-MM-dd)") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -202,13 +204,20 @@ fun TransactionScreen(
                                 submitting = false
                                 return@launch
                             }
+                            // Convert date String to Long timestamp
+                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            val parsedDate: Long = try {
+                                sdf.parse(date)?.time ?: System.currentTimeMillis()
+                            } catch (e: Exception) {
+                                System.currentTimeMillis()
+                            }
                             val transaction = Transaction(
                                 type = type,
                                 serial = serial,
                                 model = model,
-                                amount = doubleAmount, // guaranteed non-null Double
-                                date = date,
-                                description = description.ifBlank { "" }, // guaranteed non-null String
+                                amount = doubleAmount,
+                                date = parsedDate,
+                                description = description.ifBlank { "" },
                                 timestamp = System.currentTimeMillis()
                             )
                             val result = inventoryRepo.addTransaction(serial, transaction)

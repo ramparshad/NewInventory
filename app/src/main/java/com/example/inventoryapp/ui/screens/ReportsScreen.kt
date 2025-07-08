@@ -10,6 +10,9 @@ import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.Transaction
 import com.google.firebase.analytics.FirebaseAnalytics
 import androidx.compose.ui.platform.LocalContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,8 +32,10 @@ fun ReportsScreen(
         }
     }
 
-    // Group transactions by date (String)
-    val transactionsByDate: Map<String, List<Transaction>> = transactions.groupBy { it.date }
+    // Group transactions by formatted date string
+    val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val transactionsByDate: Map<String, List<Transaction>> =
+        transactions.groupBy { sdf.format(Date(it.date)) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Reports") }) }

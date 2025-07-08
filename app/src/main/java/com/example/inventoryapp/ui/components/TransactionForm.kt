@@ -420,23 +420,10 @@ fun TransactionForm(
             )
             quantityError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
-            // For single image picker (optional)
-            //Button(
-            //    onClick = {
-            //        singleImgPicker.launch(
-            //            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-            //        )
-            //    },
-            //    modifier = Modifier.fillMaxWidth(),
-            //    enabled = images.size < 5 && canEdit && !loading
-            //) {
-            //    Text("Pick Image")
-            //}
-
-            // For multiple image picker, FIX: must launch with null input
+            // For multiple image picker
             Button(
                 onClick = {
-					imgPicker.launch(PickVisualMediaRequest())
+                    imgPicker.launch(PickVisualMediaRequest())
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = images.size < 5 && canEdit && !loading
@@ -529,6 +516,15 @@ fun TransactionForm(
                                     imageUrls += ref.downloadUrl.await().toString()
                                 }
                             }
+
+                            // CONVERT DATE STRING TO LONG
+                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            val parsedDate: Long = try {
+                                sdf.parse(date)?.time ?: System.currentTimeMillis()
+                            } catch (e: Exception) {
+                                System.currentTimeMillis()
+                            }
+
                             val transaction = Transaction(
                                 serial = serial,
                                 model = model,
@@ -536,7 +532,7 @@ fun TransactionForm(
                                 aadhaar = aadhaar,
                                 amount = amountDouble ?: 0.0,
                                 description = description,
-                                date = date,
+                                date = parsedDate, // Now a Long!
                                 quantity = quantityInt ?: 1,
                                 imageUrls = imageUrls,
                                 type = type
