@@ -48,7 +48,7 @@ fun InventoryCard(
     val formattedDate = remember(item.date) {
         if (item.date > 0L) {
             try {
-                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(item.date))
+                SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(Date(item.date))
             } catch (e: Exception) {
                 item.date.toString()
             }
