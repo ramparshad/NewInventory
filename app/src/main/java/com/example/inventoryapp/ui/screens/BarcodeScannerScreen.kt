@@ -6,7 +6,10 @@ import android.util.Size
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.*
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
@@ -111,7 +114,7 @@ fun CameraPreview(
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var camera: Camera? by remember { mutableStateOf(null) }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(torchEnabled) {
         val cameraProvider = cameraProviderFuture.get()
 
         val preview = Preview.Builder()
@@ -132,11 +135,10 @@ fun CameraPreview(
                 val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                 barcodeScanner.process(image)
                     .addOnSuccessListener { barcodes ->
-                        for (barcode in barcodes) {
-                            barcode.rawValue?.let { code ->
-                                onBarcodeScanned(code)
-                                break // now allowed in a for loop
-                            }
+                        // Use firstOrNull to avoid the need for break
+                        val code = barcodes.firstOrNull { it.rawValue != null }?.rawValue
+                        if (code != null) {
+                            onBarcodeScanned(code)
                         }
                     }
                     .addOnFailureListener { e ->
