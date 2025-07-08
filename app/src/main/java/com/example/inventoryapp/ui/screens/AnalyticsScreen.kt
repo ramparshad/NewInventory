@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
@@ -63,21 +62,19 @@ fun AnalyticsScreen(inventoryRepo: InventoryRepository) {
         firebaseAnalytics.logEvent("analytics_filter_changed", bundle)
     }
 
-    // Filtering logic (FIXED to compare Longs)
+    // Filtering logic
     val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val startDateLong = startDate.takeIf { it.isNotBlank() }?.let { sdf.parse(it)?.time } ?: Long.MIN_VALUE
     val endDateLong = endDate.takeIf { it.isNotBlank() }?.let { sdf.parse(it)?.time } ?: Long.MAX_VALUE
 
     val filtered = transactions.filter { tx ->
         (selectedType == "All" || tx.type.equals(selectedType, ignoreCase = true)) &&
-        (selectedModel == "All" || (tx.model?.equals(selectedModel, ignoreCase = true) == true)) &&
+        (selectedModel == "All" || tx.model.equals(selectedModel, ignoreCase = true)) &&
         (minAmount.toDoubleOrNull()?.let { tx.amount >= it } ?: true) &&
         (maxAmount.toDoubleOrNull()?.let { tx.amount <= it } ?: true) &&
-        (tx.date >= startDateLong) &&
-        (tx.date <= endDateLong)
+        (tx.timestamp in startDateLong..endDateLong)
     }
 
-    // Totals by type for visuals
     val totalsByType = filtered.groupBy { it.type }
         .mapValues { entry -> entry.value.sumOf { it.amount } }
     val typeColors = listOf(
@@ -169,26 +166,25 @@ fun AnalyticsScreen(inventoryRepo: InventoryRepository) {
                 Text("No transactions for selected filters.")
             } else {
                 LazyColumn {
-                    filtered.forEach { tx ->
-                        item {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = typeColorMap[tx.type] ?: Color.LightGray
+                    items(filtered.size) { idx ->
+                        val tx = filtered[idx]
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = typeColorMap[tx.type] ?: Color.LightGray
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    "Type: ${tx.type} | Model: ${tx.model}",
+                                    style = MaterialTheme.typography.titleMedium
                                 )
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        "Type: ${tx.type} | Model: ${tx.model}",
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Text(
-                                        "Amount: ${tx.amount} | Date: ${tx.date}",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
+                                Text(
+                                    "Amount: ${tx.amount} | Date: ${tx.date}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
                             }
                         }
                     }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,12 +29,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
-import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import androidx.navigation.NavController
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.Transaction
@@ -59,18 +61,14 @@ fun TransactionForm(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
-    val savedState = navController.currentBackStackEntry?.savedStateHandle
+    val coroutineScope = rememberCoroutineScope()
 
     val transactionTypes = listOf("Purchase", "Sale", "Return", "Repair")
     var type by remember { mutableStateOf(prefillType ?: transactionTypes.first()) }
-    val serialStack = remember { mutableStateListOf<String>() }
-    val modelStack = remember { mutableStateListOf<String>() }
     var serial by remember { mutableStateOf(prefillSerial ?: "") }
     var model by remember { mutableStateOf(prefillModel ?: "") }
-    var isModelAuto by remember { mutableStateOf(false) }
     var phone by remember { mutableStateOf("") }
     var aadhaar by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
@@ -79,17 +77,6 @@ fun TransactionForm(
     var quantity by remember { mutableStateOf("1") }
     var images by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
-
-    val toolTips = mapOf(
-        "serial" to "Unique code for the item (scan or enter manually)",
-        "model" to "Product model (auto-filled if available)",
-        "phone" to "Customer phone (optional)",
-        "aadhaar" to "Customer Aadhaar (optional)",
-        "amount" to "Transaction value",
-        "description" to "Additional details",
-        "date" to "Date of transaction",
-        "quantity" to "Number of units"
-    )
 
     var serialError by remember { mutableStateOf<String?>(null) }
     var modelError by remember { mutableStateOf<String?>(null) }
@@ -104,61 +91,31 @@ fun TransactionForm(
     val descriptionFocus = remember { FocusRequester() }
     val quantityFocus = remember { FocusRequester() }
 
-    fun pushToStack(stack: MutableList<String>, value: String) {
-        if (stack.isEmpty() || stack.last() != value) stack.add(value)
-    }
-    fun popFromStack(stack: MutableList<String>, current: String): String =
-        if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex).also { if (stack.isEmpty()) stack.add(current) } else current
-
+    // For model suggestions
     var modelSuggestions by remember { mutableStateOf<List<String>>(emptyList()) }
     LaunchedEffect(model) {
         if (model.isNotBlank()) {
-            val models = inventoryRepo.getAllModels().toList()
-            val suggestions = models.filter { it.contains(model, ignoreCase = true) }.take(5)
-            modelSuggestions = suggestions
+            val models = inventoryRepo.getAllModels()
+            modelSuggestions = models.filter { it.contains(model, ignoreCase = true) }.take(4)
         } else {
             modelSuggestions = emptyList()
         }
     }
 
-    val scanHistory = remember { mutableStateListOf<String>() }
-    var bulkScanMode by remember { mutableStateOf(false) }
-    val scannedSerials = remember { mutableStateListOf<String>() }
-
+    // For image picker
     val imgPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         images = uris?.take(5) ?: emptyList()
     }
-    val singleImgPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
-        uri?.let {
-            images = images + it
-        }
-    }
 
-    LaunchedEffect(savedState?.get<String>("scannedSerial")) {
-        savedState?.get<String>("scannedSerial")?.let { code ->
-            serial = code
-            scanHistory.add(0, code)
-            if (bulkScanMode) scannedSerials.add(code)
-            savedState.remove<String>("scannedSerial")
-        }
-    }
-
+    // Auto model fill for non-purchase
     LaunchedEffect(serial, type) {
         if (serial.isNotBlank() && type != "Purchase") {
-            scope.launch(Dispatchers.IO) {
+            coroutineScope.launch(Dispatchers.IO) {
                 val item = inventoryRepo.getItemBySerial(serial)
                 if (item != null && item.quantity > 0) {
                     model = item.model
-                    isModelAuto = true
-                } else {
-                    model = ""
-                    isModelAuto = false
                 }
             }
-        } else if (type == "Purchase") {
-            isModelAuto = false
         }
     }
 
@@ -180,34 +137,32 @@ fun TransactionForm(
             modifier = Modifier
                 .verticalScroll(scrollState)
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .padding(horizontal = 16.dp, vertical = 24.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.98f))
                 .padding(24.dp)
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                "New Transaction",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
             SegmentedButton(
                 options = transactionTypes,
                 selected = type,
                 onSelected = { type = it }
             )
-            Spacer(Modifier.height(4.dp))
-
-            if (bulkScanMode) {
-                Text("Bulk scan mode: Scan items in sequence", color = Color.Blue)
-                if (scannedSerials.isNotEmpty()) {
-                    Text("Scanned: ${scannedSerials.joinToString()}")
-                }
-            }
+            Spacer(Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = serial,
                 onValueChange = {
-                    pushToStack(serialStack, serial)
                     serial = it
                     serialError = null
-                    isModelAuto = false
                 },
                 label = { Text("Serial Number") },
                 modifier = Modifier
@@ -215,15 +170,12 @@ fun TransactionForm(
                     .focusRequester(serialFocus),
                 singleLine = true,
                 trailingIcon = {
-                    Row {
-                        IconButton(onClick = { navController.navigate("barcode_scanner") }) {
-                            Icon(Icons.Filled.QrCodeScanner, contentDescription = "Scan Barcode")
-                        }
-                        if (serialStack.isNotEmpty()) {
-                            IconButton(onClick = { serial = popFromStack(serialStack, serial) }) {
-                                Text("Undo")
-                            }
-                        }
+                    IconButton(onClick = { navController.navigate("barcode_scanner") }) {
+                        Icon(
+                            Icons.Filled.QrCodeScanner,
+                            contentDescription = "Scan Barcode",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 },
                 isError = serialError != null,
@@ -234,15 +186,12 @@ fun TransactionForm(
                 enabled = canEdit && !loading,
                 shape = RoundedCornerShape(16.dp)
             )
-            serialError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            serialError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = MaterialTheme.typography.bodySmall.fontSize) }
 
             OutlinedTextField(
                 value = model,
                 onValueChange = {
-                    if (!isModelAuto) {
-                        pushToStack(modelStack, model)
-                        model = it
-                    }
+                    model = it
                     modelError = null
                 },
                 label = { Text("Model") },
@@ -250,35 +199,41 @@ fun TransactionForm(
                     .fillMaxWidth()
                     .focusRequester(modelFocus),
                 singleLine = true,
-                enabled = !isModelAuto && type == "Purchase" && canEdit && !loading,
+                enabled = canEdit && !loading && type == "Purchase",
                 isError = modelError != null,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
                     onNext = { phoneFocus.requestFocus() }
                 ),
-                shape = RoundedCornerShape(16.dp),
-                trailingIcon = {
-                    if (modelStack.isNotEmpty()) {
-                        IconButton(onClick = { model = popFromStack(modelStack, model) }) {
-                            Text("Undo")
+                shape = RoundedCornerShape(16.dp)
+            )
+            modelError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = MaterialTheme.typography.bodySmall.fontSize) }
+
+            // Model suggestions
+            AnimatedVisibility(modelSuggestions.isNotEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F4F8))
+                ) {
+                    Column {
+                        modelSuggestions.forEach {
+                            Text(
+                                text = it,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        model = it
+                                        modelSuggestions = emptyList()
+                                    }
+                                    .padding(10.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
-                }
-            )
-            modelError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-
-            DropdownMenu(
-                expanded = modelSuggestions.isNotEmpty(),
-                onDismissRequest = { modelSuggestions = emptyList() }
-            ) {
-                modelSuggestions.forEach {
-                    DropdownMenuItem(
-                        text = { Text(it) },
-                        onClick = {
-                            model = it
-                            modelSuggestions = emptyList()
-                        }
-                    )
                 }
             }
 
@@ -343,7 +298,7 @@ fun TransactionForm(
                 enabled = canEdit && !loading,
                 shape = RoundedCornerShape(16.dp)
             )
-            amountError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            amountError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = MaterialTheme.typography.bodySmall.fontSize) }
 
             OutlinedTextField(
                 value = description,
@@ -373,7 +328,7 @@ fun TransactionForm(
                             if (isDateValid(picked)) {
                                 date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(picked.time)
                             } else {
-                                scope.launch {
+                                coroutineScope.launch {
                                     snackbarHostState.showSnackbar("Future dates are not allowed.")
                                 }
                             }
@@ -389,11 +344,14 @@ fun TransactionForm(
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
                 enabled = canEdit && !loading,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color(0xFFEAF1FB)
+                )
             ) {
-                Icon(Icons.Filled.CalendarToday, contentDescription = null)
+                Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(8.dp))
-                Text(if (date.isBlank()) "Pick Date" else date)
+                Text(if (date.isBlank()) "Pick Date" else date, color = MaterialTheme.colorScheme.primary)
             }
 
             OutlinedTextField(
@@ -418,24 +376,33 @@ fun TransactionForm(
                 enabled = canEdit && !loading,
                 shape = RoundedCornerShape(16.dp)
             )
-            quantityError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            quantityError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = MaterialTheme.typography.bodySmall.fontSize) }
+
+            Spacer(Modifier.height(10.dp))
 
             // For multiple image picker
-            Button(
+            OutlinedButton(
                 onClick = {
                     imgPicker.launch(PickVisualMediaRequest())
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = images.size < 5 && canEdit && !loading
+                enabled = images.size < 5 && canEdit && !loading,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color(0xFFFAF8F4)
+                )
             ) {
-                Text("Pick Images (max 5)")
+                Text("Pick Images (max 5)", color = MaterialTheme.colorScheme.primary)
             }
 
+            // Image thumbnails
             if (images.isNotEmpty()) {
-                Column {
-                    Text("Tap an image to remove")
+                Column(Modifier.padding(top = 6.dp, bottom = 6.dp)) {
+                    Text("Tap an image to remove", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                     Row(
-                        Modifier.fillMaxWidth(),
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         images.forEach { uri ->
@@ -443,8 +410,9 @@ fun TransactionForm(
                                 painter = rememberAsyncImagePainter(model = uri),
                                 contentDescription = "Selected image",
                                 modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .size(58.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF3F3F3))
                                     .clickable(enabled = canEdit && !loading) {
                                         images = images - uri
                                     }
@@ -454,16 +422,7 @@ fun TransactionForm(
                 }
             }
 
-            if (scanHistory.isNotEmpty()) {
-                Column(Modifier.fillMaxWidth()) {
-                    Text("Recent Scans:", color = Color.Gray)
-                    scanHistory.take(5).forEach {
-                        Text(it, fontSize = MaterialTheme.typography.bodySmall.fontSize)
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
             Button(
                 onClick = {
                     // Validate fields
@@ -471,8 +430,8 @@ fun TransactionForm(
                     modelError = null
                     amountError = null
                     quantityError = null
-
                     var valid = true
+
                     if ("serial" in requiredFields && serial.isBlank()) {
                         serialError = "Serial is required"
                         valid = false
@@ -498,14 +457,14 @@ fun TransactionForm(
                         valid = false
                     }
                     if ("date" in requiredFields && date.isBlank()) {
-                        scope.launch { snackbarHostState.showSnackbar("Date is required") }
+                        coroutineScope.launch { snackbarHostState.showSnackbar("Date is required") }
                         valid = false
                     }
                     if (!valid) return@Button
 
                     loading = true
 
-                    scope.launch {
+                    coroutineScope.launch {
                         try {
                             val imageUrls = mutableListOf<String>()
                             if (images.isNotEmpty()) {
@@ -517,7 +476,6 @@ fun TransactionForm(
                                 }
                             }
 
-                            // CONVERT DATE STRING TO LONG
                             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                             val parsedDate: Long = try {
                                 sdf.parse(date)?.time ?: System.currentTimeMillis()
@@ -532,7 +490,7 @@ fun TransactionForm(
                                 aadhaar = aadhaar,
                                 amount = amountDouble ?: 0.0,
                                 description = description,
-                                date = parsedDate, // Now a Long!
+                                date = parsedDate,
                                 quantity = quantityInt ?: 1,
                                 imageUrls = imageUrls,
                                 type = type
@@ -554,7 +512,6 @@ fun TransactionForm(
                                 snackbarHostState.showSnackbar("Transaction saved successfully!")
                                 serial = ""
                                 model = ""
-                                isModelAuto = false
                                 phone = ""
                                 aadhaar = ""
                                 amount = ""
@@ -572,7 +529,7 @@ fun TransactionForm(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(50.dp)
                     .clip(RoundedCornerShape(28.dp)),
                 enabled = canEdit && !loading,
                 colors = ButtonDefaults.buttonColors(
@@ -582,7 +539,7 @@ fun TransactionForm(
                 if (loading) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(8.dp))
                 }

@@ -29,12 +29,11 @@ import java.util.*
 @Composable
 fun TransactionHistoryScreen(
     inventoryRepo: InventoryRepository,
-    navController: NavController? = null, // Pass navController if using navigation!
+    navController: NavController? = null,
     navToBarcodeScanner: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-
     var transactions by remember { mutableStateOf<List<Transaction>>(emptyList()) }
     var selectedTx by remember { mutableStateOf<Transaction?>(null) }
     var searchText by remember { mutableStateOf("") }
@@ -65,11 +64,9 @@ fun TransactionHistoryScreen(
         }
     }
 
-    // --- Barcode scan result handling ---
-    // Use a SavedStateHandle mechanism to receive scanned serial if navController is provided
+    // Barcode scan result handling
     if (navController != null) {
         val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
-        // Listen for scannedSerial result and update searchText
         LaunchedEffect(savedStateHandle?.get<String>("scannedSerial")) {
             val scannedSerial = savedStateHandle?.get<String>("scannedSerial")
             if (!scannedSerial.isNullOrBlank()) {
@@ -82,27 +79,23 @@ fun TransactionHistoryScreen(
     // Filtering logic
     val filteredTx = transactions
         .filter { tx ->
-            // Search text
             (searchText.isBlank() ||
-                    (tx.serial?.contains(searchText, true) == true) ||
-                    (tx.model?.contains(searchText, true) == true) ||
-                    (tx.type?.contains(searchText, true) == true))
-            // Sale type
-            && (selectedSaleType == null || tx.type.equals(selectedSaleType, true))
-            // Date
-            && (fromDate == null || (tx.timestamp >= fromDate!!.time))
-            && (toDate == null || (tx.timestamp <= toDate!!.time))
-            // Value
-            && (valueRange == null || (
-                    (tx.amount ?: 0.0) >= (valueRange?.first ?: 0.0) &&
-                    (tx.amount ?: 0.0) <= (valueRange?.second ?: Double.MAX_VALUE))
-                )
+                    (tx.serial.contains(searchText, true)) ||
+                    (tx.model.contains(searchText, true)) ||
+                    (tx.type.contains(searchText, true))) &&
+            (selectedSaleType == null || tx.type.equals(selectedSaleType, true)) &&
+            (fromDate == null || (tx.timestamp >= fromDate!!.time)) &&
+            (toDate == null || (tx.timestamp <= toDate!!.time)) &&
+            (valueRange == null || (
+                    (tx.amount) >= (valueRange?.first ?: 0.0) &&
+                    (tx.amount) <= (valueRange?.second ?: Double.MAX_VALUE)
+            ))
         }
         .let {
             when (sortBy) {
                 "Date" -> it.sortedByDescending { tx -> tx.timestamp }
-                "Type" -> it.sortedBy { tx -> tx.type ?: "" }
-                "Amount" -> it.sortedByDescending { tx -> tx.amount ?: 0.0 }
+                "Type" -> it.sortedBy { tx -> tx.type }
+                "Amount" -> it.sortedByDescending { tx -> tx.amount }
                 else -> it
             }
         }
@@ -125,7 +118,6 @@ fun TransactionHistoryScreen(
                         Icon(Icons.Default.FilterList, contentDescription = "Filter")
                     }
                     IconButton(onClick = {
-                        // If navToBarcodeScanner is provided, use it, else fallback to navController.navigate
                         if (navToBarcodeScanner != null) {
                             navToBarcodeScanner()
                         } else if (navController != null) {
@@ -210,7 +202,6 @@ fun TransactionHistoryScreen(
                             }
                         }
                         Spacer(Modifier.height(8.dp))
-
                         // Date range
                         Text("Date Range")
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -237,7 +228,6 @@ fun TransactionHistoryScreen(
                             )
                         }
                         Spacer(Modifier.height(8.dp))
-
                         // Value range
                         Text("Value Range")
                         val ranges = listOf(
@@ -290,11 +280,11 @@ fun TransactionHistoryScreen(
             text = {
                 Text(
                     "Type: ${tx.type}\n" +
-                    "Model: ${tx.model}\n" +
-                    "Serial: ${tx.serial}\n" +
-                    "Amount: ${tx.amount}\n" +
-                    "Date: ${tx.date}\n" +
-                    "Description: ${tx.description ?: ""}"
+                            "Model: ${tx.model}\n" +
+                            "Serial: ${tx.serial}\n" +
+                            "Amount: ${tx.amount}\n" +
+                            "Date: ${tx.date}\n" +
+                            "Description: ${tx.description}"
                 )
             },
             confirmButton = {

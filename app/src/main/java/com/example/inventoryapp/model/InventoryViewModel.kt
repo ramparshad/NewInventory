@@ -95,32 +95,33 @@ class InventoryViewModel(
         loadInventory()
     }
 
-	private fun filterAndSort() {
-		viewModelScope.launch(Dispatchers.Default) {
-			val allItemsResult = repo.getAllItems()
-			val allItems = if (allItemsResult is Result.Success) allItemsResult.data else emptyList()
-			val filters = _filters.value ?: InventoryFilters()
-			val search = _searchQuery.value
-			val sort = _sortBy.value
-	
-			val filtered = allItems.filter { item ->
-				(filters.serial.isNullOrBlank() || item.serial.contains(filters.serial!!, ignoreCase = true)) &&
-				(filters.model.isNullOrBlank() || item.model?.contains(filters.model!!, ignoreCase = true) == true) &&
-				(search.isBlank() ||
-					(item.name?.contains(search, true) == true
-					|| item.serial.contains(search, true)
-					|| item.model?.contains(search, true) == true)
-				)
-			}
-			val sorted = when (sort) {
-				"Date" -> filtered.sortedByDescending { it.date as? Long ?: 0L }
-				"Name" -> filtered.sortedBy { it.name ?: "" }
-				"Serial" -> filtered.sortedBy { it.serial }
-				else -> filtered
-			}
-			_inventory.postValue(sorted)
-		}
-	}
+    private fun filterAndSort() {
+        viewModelScope.launch(Dispatchers.Default) {
+            val allItemsResult = repo.getAllItems()
+            val allItems = if (allItemsResult is Result.Success) allItemsResult.data else emptyList()
+            val filters = _filters.value ?: InventoryFilters()
+            val search = _searchQuery.value
+            val sort = _sortBy.value
+
+            val filtered = allItems.filter { item ->
+                (filters.serial.isNullOrBlank() || item.serial.contains(filters.serial!!, ignoreCase = true)) &&
+                (filters.model.isNullOrBlank() || item.model.contains(filters.model!!, ignoreCase = true)) &&
+                (search.isBlank() ||
+                    (item.name.contains(search, true)
+                     || item.serial.contains(search, true)
+                     || item.model.contains(search, true)
+                    )
+                )
+            }
+            val sorted = when (sort) {
+                "Date" -> filtered.sortedByDescending { it.timestamp }
+                "Name" -> filtered.sortedBy { it.name }
+                "Serial" -> filtered.sortedBy { it.serial }
+                else -> filtered
+            }
+            _inventory.postValue(sorted)
+        }
+    }
 
     fun updateSerialFilter(serial: String) {
         _filters.value = _filters.value?.copy(serial = serial)

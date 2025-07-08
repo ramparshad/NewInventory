@@ -20,7 +20,7 @@ import com.example.inventoryapp.model.UserRole
 import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +44,7 @@ fun TransactionScreen(
     var serial by remember { mutableStateOf(prefillSerial ?: "") }
     var model by remember { mutableStateOf(prefillModel ?: "") }
     var amount by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())) }
     var description by remember { mutableStateOf("") }
     var submitting by remember { mutableStateOf(false) }
 
@@ -134,7 +134,6 @@ fun TransactionScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Type Picker (dropdown or text)
                 OutlinedTextField(
                     value = type,
                     onValueChange = { type = it },
@@ -143,7 +142,6 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Serial (with barcode scanner)
                 OutlinedTextField(
                     value = serial,
                     onValueChange = { serial = it },
@@ -156,7 +154,6 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Model
                 OutlinedTextField(
                     value = model,
                     onValueChange = { model = it },
@@ -164,7 +161,6 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Amount (no keyboardOptions)
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
@@ -172,7 +168,6 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Date (free-form or with date picker)
                 OutlinedTextField(
                     value = date,
                     onValueChange = { date = it },
@@ -180,7 +175,6 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Description (optional)
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
@@ -188,7 +182,6 @@ fun TransactionScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Submit Button
                 Button(
                     onClick = {
                         scope.launch {
@@ -204,7 +197,6 @@ fun TransactionScreen(
                                 submitting = false
                                 return@launch
                             }
-                            // Convert date String to Long timestamp
                             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                             val parsedDate: Long = try {
                                 sdf.parse(date)?.time ?: System.currentTimeMillis()
@@ -216,15 +208,14 @@ fun TransactionScreen(
                                 serial = serial,
                                 model = model,
                                 amount = doubleAmount,
-                                date = parsedDate,
-                                description = description.ifBlank { "" },
-                                timestamp = System.currentTimeMillis()
+                                date = date,
+                                timestamp = parsedDate,
+                                description = description.ifBlank { "" }
                             )
                             val result = inventoryRepo.addTransaction(serial, transaction)
                             submitting = false
                             if (result is Result.Success) {
                                 snackbarHostState.showSnackbar("Transaction added successfully")
-                                // Analytics log
                                 val bundle = Bundle().apply {
                                     putString("type", type)
                                     putString("serial", serial)
@@ -233,7 +224,6 @@ fun TransactionScreen(
                                     putString("date", date)
                                 }
                                 firebaseAnalytics.logEvent("transaction_created", bundle)
-                                // Optionally clear the form or navigate back
                                 navController.popBackStack()
                             } else {
                                 snackbarHostState.showSnackbar(

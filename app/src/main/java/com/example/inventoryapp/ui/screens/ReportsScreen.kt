@@ -11,8 +11,7 @@ import com.example.inventoryapp.model.Transaction
 import com.google.firebase.analytics.FirebaseAnalytics
 import androidx.compose.ui.platform.LocalContext
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +34,7 @@ fun ReportsScreen(
     // Group transactions by formatted date string
     val sdf = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val transactionsByDate: Map<String, List<Transaction>> =
-        transactions.groupBy { sdf.format(Date(it.date)) }
+        transactions.groupBy { if (it.date.isNotBlank()) it.date else sdf.format(Date(it.timestamp)) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Reports") }) }
@@ -48,10 +47,8 @@ fun ReportsScreen(
             if (transactions.isEmpty()) {
                 Text("No transactions available.")
             } else {
-                // For each date (string), show a header and a list of transactions for that date
                 transactionsByDate.forEach { (date, txList) ->
                     Text("Date: $date", style = MaterialTheme.typography.titleMedium)
-                    // For each transaction on this date, show details
                     txList.forEach { tx ->
                         Text("Serial: ${tx.serial} | Type: ${tx.type} | Model: ${tx.model} | Amount: ${tx.amount}")
                     }
