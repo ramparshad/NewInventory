@@ -2,14 +2,10 @@ package com.example.inventoryapp.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.util.Size
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
@@ -118,14 +114,14 @@ fun CameraPreview(
         val cameraProvider = cameraProviderFuture.get()
 
         val preview = Preview.Builder()
-            .setTargetResolution(Size(1280, 720))
+            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
             .build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
 
         val barcodeScanner = BarcodeScanning.getClient()
         val analysisUseCase = ImageAnalysis.Builder()
-            .setTargetResolution(Size(1280, 720))
+            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
 
