@@ -125,7 +125,6 @@ fun TransactionForm(
     var bulkScanMode by remember { mutableStateOf(false) }
     val scannedSerials = remember { mutableStateListOf<String>() }
 
-    // FIXED: use PickVisualMediaRequest for the launcher!
     val imgPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         images = uris?.take(5) ?: emptyList()
     }
@@ -421,10 +420,12 @@ fun TransactionForm(
             )
             quantityError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
-            // FIXED: pass PickVisualMediaRequest for image picking
+            // For single image picker (optional)
             Button(
                 onClick = {
-                    singleImgPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    singleImgPicker.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = images.size < 5 && canEdit && !loading
@@ -432,14 +433,15 @@ fun TransactionForm(
                 Text("Pick Image")
             }
 
+            // For multiple image picker, FIX: must launch with null input
             Button(
                 onClick = {
-                    imgPicker.launch(null) // For multiple images
+                    imgPicker.launch(null) // <-- CORRECT way for PickMultipleVisualMedia
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = images.size < 5 && canEdit && !loading
             ) {
-                Text("Pick Multiple Images")
+                Text("Pick Images (max 5)")
             }
 
             if (images.isNotEmpty()) {
