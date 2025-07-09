@@ -22,6 +22,7 @@ import androidx.navigation.NavController
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.Transaction
+import com.example.inventoryapp.model.UserRole
 import com.example.inventoryapp.ui.components.TransactionHistoryCard
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -32,6 +33,7 @@ import java.util.*
 fun TransactionHistoryScreen(
     inventoryRepo: InventoryRepository,
     navController: NavController? = null,
+    userRole: UserRole,
     navToBarcodeScanner: (() -> Unit)? = null
 ) {
     val context = LocalContext.current

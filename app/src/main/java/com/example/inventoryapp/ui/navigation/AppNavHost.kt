@@ -141,6 +141,7 @@ fun AppNavHost(
                 TransactionHistoryScreen(
                     inventoryRepo = inventoryRepo,
                     navController = navController,
+                    userRole = userRole,
                     navToBarcodeScanner = { navController.navigate("barcode_scanner") }
                 )
             }
