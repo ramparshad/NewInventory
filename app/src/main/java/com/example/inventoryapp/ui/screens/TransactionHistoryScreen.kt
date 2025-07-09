@@ -272,7 +272,7 @@ fun TransactionHistoryScreen(
         }
     }
 
-    // Transaction detail dialog
+    // Transaction detail dialog//
     selectedTx?.let { tx ->
         AlertDialog(
             onDismissRequest = { selectedTx = null },
