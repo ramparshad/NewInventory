@@ -1,16 +1,23 @@
 package com.example.inventoryapp.model
 
 data class Transaction(
+    val id: String = "",
     val type: String = "",
     val model: String = "",
     val serial: String = "",
-    val phone: String = "",
-    val aadhaar: String = "",
+    val customerName: String = "",
+    val phoneNumber: String? = null,
+    val aadhaarNumber: String? = null,
     val amount: Double = 0.0,
-    val description: String = "",
-    val date: String = "",          // Now always a String
     val quantity: Int = 1,
-    val user: String = "",
+    val description: String? = null,
+    val date: String = "",          // Date as String (yyyy-MM-dd)
     val timestamp: Long = 0L,       // Unix time millis
-    val imageUrls: List<String> = emptyList()
+    val userRole: String = "",
+    val images: List<String> = emptyList(),
+    // Legacy fields for backward compatibility
+    val phone: String = phoneNumber ?: "",
+    val aadhaar: String = aadhaarNumber ?: "",
+    val user: String = userRole,
+    val imageUrls: List<String> = images
 )

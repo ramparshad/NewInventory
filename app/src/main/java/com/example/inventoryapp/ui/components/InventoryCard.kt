@@ -46,12 +46,9 @@ fun InventoryCard(
     var showContextMenu by remember { mutableStateOf(false) }
 
     val formattedDate = remember(item.date) {
-        if (item.date > 0L) {
-            try {
-                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(item.date))
-            } catch (e: Exception) {
-                item.date.toString()
-            }
+        if (item.date.isNotEmpty()) {
+            // item.date is already a String in "yyyy-MM-dd" format
+            item.date
         } else "-"
     }
 
@@ -83,7 +80,7 @@ fun InventoryCard(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                if (userRole == UserRole.ADMIN) {
+                if (userRole == UserRole.ADMIN || userRole == UserRole.OPERATOR) {
                     IconButton(onClick = { showMenu = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More")
                     }
@@ -98,20 +95,25 @@ fun InventoryCard(
                                 onEdit()
                             }
                         )
-                        DropdownMenuItem(
-                            text = { Text("Delete") },
-                            onClick = {
-                                showMenu = false
-                                onDelete()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Archive") },
-                            onClick = {
-                                showMenu = false
-                                onArchive()
-                            }
-                        )
+                        // Only show delete option for ADMIN
+                        if (userRole == UserRole.ADMIN) {
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = {
+                                    showMenu = false
+                                    onDelete()
+                                }
+                            )
+                        }
+                        if (userRole == UserRole.ADMIN) {
+                            DropdownMenuItem(
+                                text = { Text("Archive") },
+                                onClick = {
+                                    showMenu = false
+                                    onArchive()
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -123,10 +125,13 @@ fun InventoryCard(
                 Spacer(Modifier.height(8.dp))
                 Text(text = item.description ?: "No description")
                 Row {
-                    Button(onClick = onAddTransaction) {
-                        Text("Add Transaction")
+                    // Only allow transactions for ADMIN and OPERATOR
+                    if (userRole == UserRole.ADMIN || userRole == UserRole.OPERATOR) {
+                        Button(onClick = onAddTransaction) {
+                            Text("Add Transaction")
+                        }
+                        Spacer(Modifier.width(8.dp))
                     }
-                    Spacer(Modifier.width(8.dp))
                     Button(onClick = onViewHistory) {
                         Text("History")
                     }

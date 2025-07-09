@@ -50,7 +50,7 @@ class InventoryViewModel(
         loadInventory()
     }
 
-    fun loadInventory(paginate: Boolean = false, limit: Int = 20) {
+    fun loadInventory(paginate: Boolean = false, limit: Int = 100) {
         _loading.value = true
         _error.value = null
         viewModelScope.launch(Dispatchers.IO) {
@@ -72,65 +72,77 @@ class InventoryViewModel(
         }
     }
 
-    fun loadNextInventoryPage(limit: Int = 20) {
+    fun loadNextInventoryPage(limit: Int = 100) {
         loadInventory(paginate = true, limit = limit)
     }
 
     fun searchInventory(query: String) {
         _searchQuery.value = query
-        filterAndSort()
+        // Reload inventory with search query instead of local filtering
+        loadInventoryWithFilters()
     }
 
     fun setFilters(filters: InventoryFilters) {
         _filters.value = filters
-        filterAndSort()
+        loadInventoryWithFilters()
     }
 
     fun setSortBy(sort: String) {
         _sortBy.value = sort
-        filterAndSort()
+        loadInventoryWithFilters()
+    }
+
+    private fun loadInventoryWithFilters() {
+        _loading.value = true
+        _error.value = null
+        viewModelScope.launch(Dispatchers.IO) {
+            // Load more items to account for filtering
+            val result = repo.getAllItems(limit = 500) 
+            when (result) {
+                is Result.Success -> {
+                    val allItems = result.data
+                    val filters = _filters.value ?: InventoryFilters()
+                    val search = _searchQuery.value
+                    val sort = _sortBy.value
+
+                    val filtered = allItems.filter { item ->
+                        (filters.serial.isNullOrBlank() || item.serial.contains(filters.serial!!, ignoreCase = true)) &&
+                        (filters.model.isNullOrBlank() || item.model.contains(filters.model!!, ignoreCase = true)) &&
+                        (search.isBlank() ||
+                            (item.name.contains(search, true)
+                             || item.serial.contains(search, true)
+                             || item.model.contains(search, true)
+                            )
+                        )
+                    }
+                    val sorted = when (sort) {
+                        "Date" -> filtered.sortedByDescending { it.timestamp }
+                        "Name" -> filtered.sortedBy { it.name }
+                        "Serial" -> filtered.sortedBy { it.serial }
+                        else -> filtered
+                    }
+                    _inventory.postValue(sorted)
+                }
+                is Result.Error -> {
+                    _error.postValue(result.exception?.message ?: "Error loading inventory")
+                }
+            }
+            _loading.postValue(false)
+        }
     }
 
     fun updateInventoryAfterTransaction() {
         loadInventory()
     }
 
-    private fun filterAndSort() {
-        viewModelScope.launch(Dispatchers.Default) {
-            val allItemsResult = repo.getAllItems()
-            val allItems = if (allItemsResult is Result.Success) allItemsResult.data else emptyList()
-            val filters = _filters.value ?: InventoryFilters()
-            val search = _searchQuery.value
-            val sort = _sortBy.value
-
-            val filtered = allItems.filter { item ->
-                (filters.serial.isNullOrBlank() || item.serial.contains(filters.serial!!, ignoreCase = true)) &&
-                (filters.model.isNullOrBlank() || item.model.contains(filters.model!!, ignoreCase = true)) &&
-                (search.isBlank() ||
-                    (item.name.contains(search, true)
-                     || item.serial.contains(search, true)
-                     || item.model.contains(search, true)
-                    )
-                )
-            }
-            val sorted = when (sort) {
-                "Date" -> filtered.sortedByDescending { it.timestamp }
-                "Name" -> filtered.sortedBy { it.name }
-                "Serial" -> filtered.sortedBy { it.serial }
-                else -> filtered
-            }
-            _inventory.postValue(sorted)
-        }
-    }
-
     fun updateSerialFilter(serial: String) {
         _filters.value = _filters.value?.copy(serial = serial)
-        filterAndSort()
+        loadInventoryWithFilters()
     }
 
     fun updateModelFilter(model: String) {
         _filters.value = _filters.value?.copy(model = model)
-        filterAndSort()
+        loadInventoryWithFilters()
     }
 
     fun loadTransactionHistory(serial: String, paginate: Boolean = false, limit: Int = 20) {

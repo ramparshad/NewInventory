@@ -63,10 +63,29 @@ fun InventoryScreen(
         }
     }
 
-    // Always reload data if blank and not loading
+    // Always reload data if blank and not loading, plus auto-refresh every 30 seconds
     LaunchedEffect(inventory, loading) {
         if (inventory.isEmpty() && !loading) {
             viewModel.loadInventory()
+        }
+    }
+
+    // Auto-refresh inventory every 30 seconds to show latest data
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(30000) // 30 seconds
+            if (!loading) {
+                viewModel.loadInventory()
+            }
+        }
+    }
+
+    // Collect scanned serial from barcode scanner
+    val scannedSerial = navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("scannedSerial")?.observeAsState()
+    LaunchedEffect(scannedSerial?.value) {
+        scannedSerial?.value?.let { serial ->
+            viewModel.updateSerialFilter(serial)
+            navController.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedSerial")
         }
     }
 

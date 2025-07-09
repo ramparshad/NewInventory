@@ -490,10 +490,11 @@ fun TransactionForm(
                                 aadhaar = aadhaar,
                                 amount = amountDouble ?: 0.0,
                                 description = description,
-                                date = parsedDate,
+                                date = date, // Use the original date string directly
                                 quantity = quantityInt ?: 1,
                                 imageUrls = imageUrls,
-                                type = type
+                                type = type,
+                                timestamp = parsedDate // Use parsedDate for timestamp field
                             )
                             val item = inventoryRepo.getItemBySerial(serial)
                             if (type == "Sale" && (item == null || item.quantity < 1)) {

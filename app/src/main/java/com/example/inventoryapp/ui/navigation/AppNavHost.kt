@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -65,6 +66,18 @@ fun AppNavHost(
                             }
                         )
                     }
+                    // Add logout button
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Logout, contentDescription = "Logout") },
+                        label = { Text("Logout") },
+                        selected = false,
+                        onClick = {
+                            authRepo.logout()
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -128,6 +141,7 @@ fun AppNavHost(
                 TransactionHistoryScreen(
                     inventoryRepo = inventoryRepo,
                     navController = navController,
+                    userRole = userRole,
                     navToBarcodeScanner = { navController.navigate("barcode_scanner") }
                 )
             }
