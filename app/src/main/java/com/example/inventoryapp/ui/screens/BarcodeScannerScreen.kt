@@ -120,7 +120,7 @@ fun BarcodeScannerScreen(navController: NavController) {
                     )
                 ) {
                     Text(
-                        text = "Align barcode within the frame",
+                        text = "Align IMEI barcode or serial number within the frame",
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                         modifier = Modifier.padding(12.dp),
                         color = MaterialTheme.colorScheme.onSurface
@@ -212,10 +212,22 @@ fun CameraPreview(
                 val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                 barcodeScanner.process(image)
                     .addOnSuccessListener { barcodes ->
-                        // Use firstOrNull to avoid the need for break
-                        val code = barcodes.firstOrNull { it.rawValue != null }?.rawValue
-                        if (code != null) {
-                            onBarcodeScanned(code)
+                        // Filter for IMEI-like codes (15 digits) or any barcode with valid serial format
+                        val validCode = barcodes.firstOrNull { barcode ->
+                            val code = barcode.rawValue
+                            when {
+                                // IMEI: exactly 15 digits
+                                code?.matches(Regex("^\\d{15}$")) == true -> true
+                                // Serial number: alphanumeric, 6-20 characters
+                                code?.matches(Regex("^[A-Za-z0-9]{6,20}$")) == true -> true
+                                // Other barcode formats that might contain serial numbers
+                                code?.length in 8..25 -> true
+                                else -> false
+                            }
+                        }?.rawValue
+                        
+                        if (validCode != null) {
+                            onBarcodeScanned(validCode)
                         }
                     }
                     .addOnFailureListener { e ->

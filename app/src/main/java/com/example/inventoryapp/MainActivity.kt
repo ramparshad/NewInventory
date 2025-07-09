@@ -3,6 +3,7 @@ package com.example.inventoryapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.inventoryapp.data.AuthRepository
@@ -17,9 +18,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             InventoryAppTheme {
                 val navController = rememberNavController()
-                val authRepo = AuthRepository()
+                val authRepo = remember { AuthRepository(this@MainActivity) }
                 val inventoryRepo = FirebaseInventoryRepository()
-                val userRole: UserRole = authRepo.getCurrentUserRole()
+                
+                val currentUser by authRepo.currentUser.collectAsState()
+                val userRole = currentUser?.role ?: UserRole.VIEWER
+                
                 AppNavHost(
                     authRepo = authRepo,
                     inventoryRepo = inventoryRepo,
