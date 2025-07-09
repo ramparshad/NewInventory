@@ -46,12 +46,9 @@ fun InventoryCard(
     var showContextMenu by remember { mutableStateOf(false) }
 
     val formattedDate = remember(item.date) {
-        if (item.date > 0L) {
-            try {
-                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(item.date))
-            } catch (e: Exception) {
-                item.date.toString()
-            }
+        if (item.date.isNotEmpty()) {
+            // item.date is already a String in "yyyy-MM-dd" format
+            item.date
         } else "-"
     }
 
