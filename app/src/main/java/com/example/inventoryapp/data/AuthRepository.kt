@@ -46,7 +46,7 @@ class AuthRepository(private val context: Context) {
     }
     
     fun login(username: String, password: String): Result<User> {
-        // Allow blank credentials for testing - default to admin
+        // Allow blank credentials for testing - default to admin //
         if (username.isBlank() && password.isBlank()) {
             val adminUser = defaultUsers.first { it.role == UserRole.ADMIN }
             _currentUser.value = adminUser
