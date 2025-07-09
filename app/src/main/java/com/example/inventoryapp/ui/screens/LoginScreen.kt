@@ -154,13 +154,13 @@ fun LoginScreen(navController: NavController, authRepo: AuthRepository) {
                 scope.launch {
                     try {
                         val result = authRepo.login(username, password)
-                        if (result.isSuccess) {
+                        result.onSuccess { user ->
                             authRepo.enableBiometricForUser(username)
                             navController.navigate("inventory") {
                                 popUpTo("login") { inclusive = true }
                             }
-                        } else {
-                            error = result.exceptionOrNull()?.message ?: "Login failed"
+                        }.onFailure { exception ->
+                            error = exception.message ?: "Login failed"
                         }
                     } catch (e: Exception) {
                         error = e.message ?: "Login failed"
