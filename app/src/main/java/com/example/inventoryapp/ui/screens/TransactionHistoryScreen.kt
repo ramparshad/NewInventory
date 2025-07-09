@@ -2,7 +2,9 @@ package com.example.inventoryapp.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -181,91 +183,152 @@ fun TransactionHistoryScreen(
             }
         }
 
-        // Filter dialog
+        // Modern Filter dialog
         if (filterDialogVisible) {
             AlertDialog(
                 onDismissRequest = { filterDialogVisible = false },
-                title = { Text("Filter Options") },
+                title = { 
+                    Text(
+                        "Filter Transactions",
+                        style = MaterialTheme.typography.headlineSmall
+                    ) 
+                },
                 text = {
-                    Column {
-                        // Sale type
-                        Text("Sale Type")
-                        val saleTypes = listOf("sale", "purchase", "return", "repair")
-                        Row {
-                            saleTypes.forEach { type ->
-                                FilterChip(
-                                    selected = selectedSaleType == type,
-                                    onClick = { selectedSaleType = if (selectedSaleType == type) null else type },
-                                    label = { Text(type.replaceFirstChar { it.uppercase() }) },
-                                    modifier = Modifier.padding(end = 4.dp)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Transaction Type Section
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Transaction Type",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            val saleTypes = listOf("sale", "purchase", "return", "repair")
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(saleTypes) { type ->
+                                    FilterChip(
+                                        selected = selectedSaleType == type,
+                                        onClick = { selectedSaleType = if (selectedSaleType == type) null else type },
+                                        label = { 
+                                            Text(
+                                                type.replaceFirstChar { it.uppercase() },
+                                                style = MaterialTheme.typography.labelMedium
+                                            ) 
+                                        },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
+                        // Date Range Section
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Date Range",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                OutlinedTextField(
+                                    value = fromDateString,
+                                    onValueChange = {
+                                        fromDateString = it
+                                        fromDate = try { dateFormat.parse(it) } catch (_: Exception) { null }
+                                    },
+                                    label = { Text("From", style = MaterialTheme.typography.labelMedium) },
+                                    placeholder = { Text("yyyy-MM-dd") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                OutlinedTextField(
+                                    value = toDateString,
+                                    onValueChange = {
+                                        toDateString = it
+                                        toDate = try { dateFormat.parse(it) } catch (_: Exception) { null }
+                                    },
+                                    label = { Text("To", style = MaterialTheme.typography.labelMedium) },
+                                    placeholder = { Text("yyyy-MM-dd") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp)
                                 )
                             }
                         }
-                        Spacer(Modifier.height(8.dp))
-                        // Date range
-                        Text("Date Range")
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            OutlinedTextField(
-                                value = fromDateString,
-                                onValueChange = {
-                                    fromDateString = it
-                                    fromDate = try { dateFormat.parse(it) } catch (_: Exception) { null }
-                                },
-                                label = { Text("From (yyyy-MM-dd)") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f)
+
+                        // Amount Range Section
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Amount Range",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
                             )
-                            Spacer(Modifier.width(8.dp))
-                            OutlinedTextField(
-                                value = toDateString,
-                                onValueChange = {
-                                    toDateString = it
-                                    toDate = try { dateFormat.parse(it) } catch (_: Exception) { null }
-                                },
-                                label = { Text("To (yyyy-MM-dd)") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f)
+                            val ranges = listOf(
+                                Pair(null, 5000.0) to "<₹5K",
+                                Pair(5000.0, 10000.0) to "₹5K-₹10K",
+                                Pair(10000.0, 20000.0) to "₹10K-₹20K",
+                                Pair(20000.0, 30000.0) to "₹20K-₹30K",
+                                Pair(30000.0, 45000.0) to "₹30K-₹45K",
+                                Pair(45000.0, null) to ">₹45K"
                             )
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        // Value range
-                        Text("Value Range")
-                        val ranges = listOf(
-                            Pair(null, 5000.0) to "<5000",
-                            Pair(5000.0, 10000.0) to "5000-10000",
-                            Pair(10000.0, 20000.0) to "10000-20000",
-                            Pair(20000.0, 30000.0) to "20000-30000",
-                            Pair(30000.0, 45000.0) to "30000-45000",
-                            Pair(45000.0, null) to "above 45000"
-                        )
-                        Row {
-                            ranges.forEach { (range, label) ->
-                                FilterChip(
-                                    selected = valueRange == range,
-                                    onClick = {
-                                        valueRange = if (valueRange == range) null else range
-                                    },
-                                    label = { Text(label) },
-                                    modifier = Modifier.padding(end = 4.dp)
-                                )
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(ranges) { (range, label) ->
+                                    FilterChip(
+                                        selected = valueRange == range,
+                                        onClick = {
+                                            valueRange = if (valueRange == range) null else range
+                                        },
+                                        label = { 
+                                            Text(
+                                                label,
+                                                style = MaterialTheme.typography.labelMedium
+                                            ) 
+                                        },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = MaterialTheme.colorScheme.secondary,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onSecondary
+                                        )
+                                    )
+                                }
                             }
                         }
                     }
                 },
                 confirmButton = {
-                    Button(onClick = { filterDialogVisible = false }) { Text("OK") }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        selectedSaleType = null
-                        fromDate = null
-                        toDate = null
-                        fromDateString = ""
-                        toDateString = ""
-                        valueRange = null
-                        filterDialogVisible = false
-                    }) {
-                        Text("Clear")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(
+                            onClick = {
+                                selectedSaleType = null
+                                fromDate = null
+                                toDate = null
+                                fromDateString = ""
+                                toDateString = ""
+                                valueRange = null
+                            },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.secondary
+                            )
+                        ) {
+                            Text("Clear All")
+                        }
+                        Button(
+                            onClick = { filterDialogVisible = false },
+                            shape = RoundedCornerShape(12.dp)
+                        ) { 
+                            Text("Apply Filters") 
+                        }
                     }
                 }
             )

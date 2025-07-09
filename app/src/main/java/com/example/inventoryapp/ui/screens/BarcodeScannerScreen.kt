@@ -8,12 +8,24 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -57,9 +69,30 @@ fun BarcodeScannerScreen(navController: NavController) {
     ) {
         when {
             !hasCameraPermission -> {
-                Text("Camera permission is required to scan barcodes.")
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Camera,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "Camera permission is required to scan barcodes.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
+                        Text("Grant Permission")
+                    }
+                }
             }
             else -> {
+                // Camera preview
                 CameraPreview(
                     onBarcodeScanned = { code ->
                         if (scanResult == null) {
@@ -74,24 +107,72 @@ fun BarcodeScannerScreen(navController: NavController) {
                     lifecycleOwner = lifecycleOwner
                 )
 
-                // Torch toggle and cancel button
-                Column(
+                // Barcode scanning overlay
+                ScannerOverlay()
+
+                // Top instruction bar
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                    )
+                ) {
+                    Text(
+                        text = "Align barcode within the frame",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                        modifier = Modifier.padding(12.dp),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                // Bottom controls
+                Card(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                    )
                 ) {
-                    Row {
-                        Button(onClick = { torchEnabled = !torchEnabled }) {
-                            Text(if (torchEnabled) "Torch Off" else "Torch On")
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { torchEnabled = !torchEnabled },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(if (torchEnabled) "Flash Off" else "Flash On")
                         }
-                        Spacer(Modifier.width(16.dp))
-                        Button(onClick = { navController.popBackStack() }) {
+                        Button(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text("Cancel")
                         }
                     }
                 }
-                error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
+
+                // Error message
+                error?.let { 
+                    Card(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            text = "Error: $it",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(12.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
             }
         }
     }
@@ -181,4 +262,93 @@ fun CameraPreview(
         },
         modifier = Modifier.fillMaxSize()
     )
+}
+
+@Composable
+fun ScannerOverlay() {
+    Canvas(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+        val scannerSize = minOf(canvasWidth, canvasHeight) * 0.6f
+        val left = (canvasWidth - scannerSize) / 2
+        val top = (canvasHeight - scannerSize) / 2
+        val right = left + scannerSize
+        val bottom = top + scannerSize
+
+        // Darken the area outside the scanner frame
+        drawRect(
+            color = Color.Black.copy(alpha = 0.6f),
+            size = size
+        )
+
+        // Create a clear rectangle in the center
+        drawRect(
+            color = Color.Transparent,
+            topLeft = androidx.compose.ui.geometry.Offset(left, top),
+            size = androidx.compose.ui.geometry.Size(scannerSize, scannerSize)
+        )
+
+        // Draw corner indicators
+        val cornerLength = 30f
+        val cornerStroke = 4f
+        val cornerColor = Color.White
+
+        // Top-left corner
+        drawLine(
+            color = cornerColor,
+            start = androidx.compose.ui.geometry.Offset(left, top),
+            end = androidx.compose.ui.geometry.Offset(left + cornerLength, top),
+            strokeWidth = cornerStroke
+        )
+        drawLine(
+            color = cornerColor,
+            start = androidx.compose.ui.geometry.Offset(left, top),
+            end = androidx.compose.ui.geometry.Offset(left, top + cornerLength),
+            strokeWidth = cornerStroke
+        )
+
+        // Top-right corner
+        drawLine(
+            color = cornerColor,
+            start = androidx.compose.ui.geometry.Offset(right, top),
+            end = androidx.compose.ui.geometry.Offset(right - cornerLength, top),
+            strokeWidth = cornerStroke
+        )
+        drawLine(
+            color = cornerColor,
+            start = androidx.compose.ui.geometry.Offset(right, top),
+            end = androidx.compose.ui.geometry.Offset(right, top + cornerLength),
+            strokeWidth = cornerStroke
+        )
+
+        // Bottom-left corner
+        drawLine(
+            color = cornerColor,
+            start = androidx.compose.ui.geometry.Offset(left, bottom),
+            end = androidx.compose.ui.geometry.Offset(left + cornerLength, bottom),
+            strokeWidth = cornerStroke
+        )
+        drawLine(
+            color = cornerColor,
+            start = androidx.compose.ui.geometry.Offset(left, bottom),
+            end = androidx.compose.ui.geometry.Offset(left, bottom - cornerLength),
+            strokeWidth = cornerStroke
+        )
+
+        // Bottom-right corner
+        drawLine(
+            color = cornerColor,
+            start = androidx.compose.ui.geometry.Offset(right, bottom),
+            end = androidx.compose.ui.geometry.Offset(right - cornerLength, bottom),
+            strokeWidth = cornerStroke
+        )
+        drawLine(
+            color = cornerColor,
+            start = androidx.compose.ui.geometry.Offset(right, bottom),
+            end = androidx.compose.ui.geometry.Offset(right, bottom - cornerLength),
+            strokeWidth = cornerStroke
+        )
+    }
 }
