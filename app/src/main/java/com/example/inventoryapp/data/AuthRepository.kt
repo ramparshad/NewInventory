@@ -51,16 +51,16 @@ class AuthRepository(private val context: Context) {
             val adminUser = defaultUsers.first { it.role == UserRole.ADMIN }
             _currentUser.value = adminUser
             prefs.edit().putString("current_user", adminUser.username).apply()
-            return Result.success(adminUser)
+            return Result.Success(adminUser)
         }
 
         val user = getUser(username)
         return if (user != null && user.passwordHash == hashPassword(password)) {
             _currentUser.value = user
             prefs.edit().putString("current_user", username).apply()
-            Result.success(user)
+            Result.Success(user)
         } else {
-            Result.failure(Exception("Invalid username or password"))
+            Result.Error(Exception("Invalid username or password"))
         }
     }
 

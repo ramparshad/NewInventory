@@ -22,6 +22,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import com.example.inventoryapp.data.AuthRepository
 import com.example.inventoryapp.data.User
+import com.example.inventoryapp.data.Result
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -151,14 +152,17 @@ fun LoginScreen(navController: NavController, authRepo: AuthRepository) {
                 loading = true
                 scope.launch {
                     try {
-                        val result = authRepo.login(username, password)
-                        result.onSuccess { user: User ->
-                            authRepo.enableBiometricForUser(username)
-                            navController.navigate("inventory") {
-                                popUpTo("login") { inclusive = true }
+                        val result: Result<User> = authRepo.login(username, password)
+                        when (result) {
+                            is Result.Success -> {
+                                authRepo.enableBiometricForUser(username)
+                                navController.navigate("inventory") {
+                                    popUpTo("login") { inclusive = true }
+                                }
                             }
-                        }.onFailure { exception: Throwable ->
-                            error = exception.message ?: "Login failed"
+                            is Result.Error -> {
+                                error = result.exception.message ?: "Login failed"
+                            }
                         }
                     } catch (e: Exception) {
                         error = e.message ?: "Login failed"
