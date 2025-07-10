@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.ShowChart
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -68,7 +68,7 @@ fun AppNavHost(
                     }
                     // Add logout button
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Logout, contentDescription = "Logout") },
+                        icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout") },
                         label = { Text("Logout") },
                         selected = false,
                         onClick = {
