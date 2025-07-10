@@ -1,7 +1,6 @@
 package com.example.inventoryapp.ui.screens
 
 import androidx.biometric.BiometricManager
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -12,9 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -24,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import com.example.inventoryapp.data.AuthRepository
+import com.example.inventoryapp.data.User
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,7 +29,7 @@ import kotlinx.coroutines.launch
 fun LoginScreen(navController: NavController, authRepo: AuthRepository) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
+
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -61,13 +59,13 @@ fun LoginScreen(navController: NavController, authRepo: AuthRepository) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "📦",
+                    text = "\uD83D\uDCE6",
                     fontSize = 48.sp,
                     textAlign = TextAlign.Center
                 )
             }
         }
-        
+
         Text(
             text = "Inventory App",
             fontSize = 28.sp,
@@ -75,7 +73,7 @@ fun LoginScreen(navController: NavController, authRepo: AuthRepository) {
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        
+
         Text(
             text = "Sign in to continue",
             fontSize = 16.sp,
@@ -86,7 +84,7 @@ fun LoginScreen(navController: NavController, authRepo: AuthRepository) {
         // Username Field
         OutlinedTextField(
             value = username,
-            onValueChange = { 
+            onValueChange = {
                 username = it
                 error = null
             },
@@ -101,7 +99,7 @@ fun LoginScreen(navController: NavController, authRepo: AuthRepository) {
         // Password Field
         OutlinedTextField(
             value = password,
-            onValueChange = { 
+            onValueChange = {
                 password = it
                 error = null
             },
@@ -149,17 +147,17 @@ fun LoginScreen(navController: NavController, authRepo: AuthRepository) {
                     error = "Please enter both username and password"
                     return@Button
                 }
-                
+
                 loading = true
                 scope.launch {
                     try {
                         val result = authRepo.login(username, password)
-                        result.onSuccess { user ->
+                        result.onSuccess { user: User ->
                             authRepo.enableBiometricForUser(username)
                             navController.navigate("inventory") {
                                 popUpTo("login") { inclusive = true }
                             }
-                        }.onFailure { exception ->
+                        }.onFailure { exception: Throwable ->
                             error = exception.message ?: "Login failed"
                         }
                     } catch (e: Exception) {
@@ -223,7 +221,7 @@ fun LoginScreen(navController: NavController, authRepo: AuthRepository) {
 
         // Demo Credentials Info
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
