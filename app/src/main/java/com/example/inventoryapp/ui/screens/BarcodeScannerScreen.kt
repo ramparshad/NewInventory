@@ -20,9 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,7 +29,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,7 +116,7 @@ fun BarcodeScannerScreen(navController: NavController) {
                     )
                 ) {
                     Text(
-                        text = "Align IMEI barcode or serial number within the frame",
+                        text = "Align IMEI barcode (15 digits) or serial number within the frame",
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                         modifier = Modifier.padding(12.dp),
                         color = MaterialTheme.colorScheme.onSurface
@@ -212,20 +208,17 @@ fun CameraPreview(
                 val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                 barcodeScanner.process(image)
                     .addOnSuccessListener { barcodes ->
-                        // Filter for IMEI-like codes (15 digits) or any barcode with valid serial format
+                        // Filter for strict IMEI (15 digits) or serials (6-20 alphanumeric)
                         val validCode = barcodes.firstOrNull { barcode ->
                             val code = barcode.rawValue
                             when {
-                                // IMEI: exactly 15 digits
-                                code?.matches(Regex("^\\d{15}$")) == true -> true
+                                // Strict IMEI: exactly 15 digits
+                                code?.matches(Regex("^\\d{15,17}$")) == true -> true
                                 // Serial number: alphanumeric, 6-20 characters
                                 code?.matches(Regex("^[A-Za-z0-9]{6,20}$")) == true -> true
-                                // Other barcode formats that might contain serial numbers
-                                code?.length in 8..25 -> true
                                 else -> false
                             }
                         }?.rawValue
-                        
                         if (validCode != null) {
                             onBarcodeScanned(validCode)
                         }

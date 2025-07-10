@@ -48,7 +48,6 @@ fun InventoryScreen(
     val allSelected = inventory.isNotEmpty() && inventory.all { selectedSerials.contains(it.serial) }
 
     var selectedItem by remember { mutableStateOf<InventoryItem?>(null) }
-    var editingItem by remember { mutableStateOf<InventoryItem?>(null) }
     var filterDialogVisible by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -171,12 +170,13 @@ fun InventoryScreen(
                     Text("No inventory items found.")
                 }
                 else -> LazyColumn {
-                    items(inventory) { item ->
+                    // Always display the full inventory list as received
+                    items(items = inventory, key = { it.serial }) { item ->
                         InventoryCard(
                             item = item,
                             userRole = role,
                             onClick = { selectedItem = item },
-                            onEdit = { editingItem = item },
+                            onEdit = { /* implement if needed */ },
                             onDelete = {
                                 scope.launch {
                                     val result = inventoryRepo.deleteItem(item.serial)
@@ -188,8 +188,8 @@ fun InventoryScreen(
                                     }
                                 }
                             },
-                            onAddTransaction = { /* show transaction dialog or navigate if needed */ },
-                            onViewHistory = { /* show history dialog or screen if needed */ },
+                            onAddTransaction = { /* implement if needed */ },
+                            onViewHistory = { /* implement if needed */ },
                             onArchive = { /* archive not used */ },
                             onSelectionChange = { checked ->
                                 selectedSerials = if (checked) selectedSerials + item.serial else selectedSerials - item.serial

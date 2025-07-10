@@ -20,6 +20,10 @@ interface InventoryRepository {
     suspend fun addBatchInventory(items: List<InventoryItem>): Result<Unit>
     suspend fun getItemBySerial(serial: String): InventoryItem?
     suspend fun getAllModels(): List<String>
+
+    // --- Validation helpers for transaction screen ---
+    suspend fun serialExists(serial: String): Boolean
+    suspend fun wasSoldPreviously(serial: String): Boolean
 }
 
 // --- Firebase implementation ---
@@ -122,12 +126,29 @@ class FirebaseInventoryRepository(
     }
 
     override suspend fun getAllModels(): List<String> {
-        // Fetch all items and extract model names
         val itemsResult = getAllItems(limit = 1000)
         return if (itemsResult is Result.Success) {
             itemsResult.data.mapNotNull { it.model }.distinct()
         } else {
             emptyList()
         }
+    }
+
+    // --- Validation helpers ---
+
+    override suspend fun serialExists(serial: String): Boolean {
+        val doc = db.collection("inventory").document(serial).get().await()
+        return doc.exists()
+    }
+
+    override suspend fun wasSoldPreviously(serial: String): Boolean {
+        // Consider "Sale" or "Sell" as the transaction type for a sale
+        val txSnapshot = db.collection("transactions")
+            .whereEqualTo("serial", serial)
+            .whereIn("type", listOf("Sale", "Sell"))
+            .limit(1)
+            .get()
+            .await()
+        return !txSnapshot.isEmpty
     }
 }
