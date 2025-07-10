@@ -77,7 +77,7 @@ fun InventoryCard(
                 ) {
                     item.imageUrls.forEach { url ->
                         AsyncImage(
-                            model = ImageRequest.Builder(LocalHapticFeedback.current)
+                            model = ImageRequest.Builder(LocalContext.current)
                                 .data(url)
                                 .crossfade(true)
                                 .build(),
