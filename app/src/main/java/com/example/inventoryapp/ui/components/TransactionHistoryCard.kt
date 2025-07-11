@@ -7,19 +7,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import com.example.inventoryapp.model.Transaction
 
 @Composable
 fun TransactionHistoryCard(
     transaction: Transaction,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp, horizontal = 8.dp)
             .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
         Column(Modifier.padding(12.dp)) {
             Text(

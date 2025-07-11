@@ -32,6 +32,10 @@ import com.example.inventoryapp.model.UserRole
 import com.example.inventoryapp.ui.components.InventoryCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +51,7 @@ fun InventoryScreen(
     val error by viewModel.error.observeAsState(null)
     val filters by viewModel.filters.observeAsState(InventoryFilters())
     val role = viewModel.userRole
-    val sortBy = viewModel.sortBy.collectAsState().value
+    val sortBy by viewModel.sortBy.collectAsState()
 
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var selectedSerials by remember { mutableStateOf(setOf<String>()) }

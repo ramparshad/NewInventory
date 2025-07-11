@@ -6,7 +6,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.tasks.await
-import com.example.inventoryapp.data.Result
 
 // --- Interface ---
 interface InventoryRepository {
@@ -24,6 +23,9 @@ interface InventoryRepository {
     // --- Validation helpers for transaction screen ---
     suspend fun serialExists(serial: String): Boolean
     suspend fun wasSoldPreviously(serial: String): Boolean
+
+    // --- New helper for transaction forms/screens ---
+    suspend fun wasSerialSold(serial: String): Boolean
 }
 
 // --- Firebase implementation ---
@@ -142,10 +144,20 @@ class FirebaseInventoryRepository(
     }
 
     override suspend fun wasSoldPreviously(serial: String): Boolean {
-        // Consider "Sale" or "Sell" as the transaction type for a sale
         val txSnapshot = db.collection("transactions")
             .whereEqualTo("serial", serial)
             .whereIn("type", listOf("Sale", "Sell"))
+            .limit(1)
+            .get()
+            .await()
+        return !txSnapshot.isEmpty
+    }
+
+    // --- New helper for transaction forms/screens ---
+    override suspend fun wasSerialSold(serial: String): Boolean {
+        val txSnapshot = db.collection("transactions")
+            .whereEqualTo("serial", serial)
+            .whereEqualTo("type", "Sale")
             .limit(1)
             .get()
             .await()

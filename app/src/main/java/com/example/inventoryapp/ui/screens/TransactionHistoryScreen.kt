@@ -1,5 +1,8 @@
 package com.example.inventoryapp.ui.screens
 
+import android.app.DatePickerDialog
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,11 +16,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
@@ -37,7 +38,6 @@ fun TransactionHistoryScreen(
     navToBarcodeScanner: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     var transactions by remember { mutableStateOf<List<Transaction>>(emptyList()) }
     var selectedTx by remember { mutableStateOf<Transaction?>(null) }
     var searchText by remember { mutableStateOf("") }
@@ -53,7 +53,9 @@ fun TransactionHistoryScreen(
     var toDate by remember { mutableStateOf<Date?>(null) }
     var valueRange by remember { mutableStateOf<Pair<Double?, Double?>?>(null) }
 
-    // Date pickers state
+    // Date picker state
+    var fromDatePickerOpen by remember { mutableStateOf(false) }
+    var toDatePickerOpen by remember { mutableStateOf(false) }
     var fromDateString by remember { mutableStateOf("") }
     var toDateString by remember { mutableStateOf("") }
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
@@ -88,11 +90,11 @@ fun TransactionHistoryScreen(
                     (tx.model.contains(searchText, true)) ||
                     (tx.type.contains(searchText, true))) &&
             (selectedSaleType == null || tx.type.equals(selectedSaleType, true)) &&
-            (fromDate == null || (tx.timestamp >= fromDate!!.time)) &&
-            (toDate == null || (tx.timestamp <= toDate!!.time)) &&
+            (fromDate == null || tx.timestamp >= fromDate!!.time) &&
+            (toDate == null || tx.timestamp <= toDate!!.time) &&
             (valueRange == null || (
-                    (tx.amount) >= (valueRange?.first ?: 0.0) &&
-                    (tx.amount) <= (valueRange?.second ?: Double.MAX_VALUE)
+                tx.amount >= (valueRange?.first ?: 0.0) &&
+                tx.amount <= (valueRange?.second ?: Double.MAX_VALUE)
             ))
         }
         .let {
@@ -104,13 +106,11 @@ fun TransactionHistoryScreen(
             }
         }
 
-    // --- UI ---
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 8.dp, vertical = 8.dp)
     ) {
-        // Search bar
         OutlinedTextField(
             value = searchText,
             onValueChange = { searchText = it },
@@ -177,23 +177,31 @@ fun TransactionHistoryScreen(
         } else {
             LazyColumn {
                 items(filteredTx) { tx ->
+                    val typeColor = when (tx.type.lowercase()) {
+                        "sale" -> Color(0xFF4CAF50)
+                        "purchase" -> Color(0xFF2196F3)
+                        "repair" -> Color(0xFFFFA726)
+                        "return" -> Color(0xFFBDBDBD)
+                        else -> MaterialTheme.colorScheme.surface
+                    }
                     TransactionHistoryCard(
                         transaction = tx,
-                        onClick = { selectedTx = tx }
+                        onClick = { selectedTx = tx },
+                        backgroundColor = typeColor
                     )
                 }
             }
         }
 
-        // Modern Filter dialog
+        // Filter dialog
         if (filterDialogVisible) {
             AlertDialog(
                 onDismissRequest = { filterDialogVisible = false },
-                title = { 
+                title = {
                     Text(
                         "Filter Transactions",
                         style = MaterialTheme.typography.headlineSmall
-                    ) 
+                    )
                 },
                 text = {
                     Column(
@@ -215,11 +223,11 @@ fun TransactionHistoryScreen(
                                     FilterChip(
                                         selected = selectedSaleType == type,
                                         onClick = { selectedSaleType = if (selectedSaleType == type) null else type },
-                                        label = { 
+                                        label = {
                                             Text(
                                                 type.replaceFirstChar { it.uppercase() },
                                                 style = MaterialTheme.typography.labelMedium
-                                            ) 
+                                            )
                                         },
                                         colors = FilterChipDefaults.filterChipColors(
                                             selectedContainerColor = MaterialTheme.colorScheme.primary,
@@ -230,7 +238,7 @@ fun TransactionHistoryScreen(
                             }
                         }
 
-                        // Date Range Section
+                        // Date Range Section with DatePicker
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
                                 "Date Range",
@@ -243,28 +251,66 @@ fun TransactionHistoryScreen(
                             ) {
                                 OutlinedTextField(
                                     value = fromDateString,
-                                    onValueChange = {
-                                        fromDateString = it
-                                        fromDate = try { dateFormat.parse(it) } catch (_: Exception) { null }
-                                    },
+                                    onValueChange = { },
                                     label = { Text("From", style = MaterialTheme.typography.labelMedium) },
                                     placeholder = { Text("yyyy-MM-dd") },
                                     singleLine = true,
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp)
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { fromDatePickerOpen = true },
+                                    shape = RoundedCornerShape(12.dp),
+                                    readOnly = true
                                 )
                                 OutlinedTextField(
                                     value = toDateString,
-                                    onValueChange = {
-                                        toDateString = it
-                                        toDate = try { dateFormat.parse(it) } catch (_: Exception) { null }
-                                    },
+                                    onValueChange = { },
                                     label = { Text("To", style = MaterialTheme.typography.labelMedium) },
                                     placeholder = { Text("yyyy-MM-dd") },
                                     singleLine = true,
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp)
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { toDatePickerOpen = true },
+                                    shape = RoundedCornerShape(12.dp),
+                                    readOnly = true
                                 )
+                            }
+
+                            // DatePickerDialogs
+                            if (fromDatePickerOpen) {
+                                val calendar = Calendar.getInstance()
+                                DatePickerDialog(
+                                    context,
+                                    { _, year, month, dayOfMonth ->
+                                        val picked = Calendar.getInstance()
+                                        picked.set(year, month, dayOfMonth)
+                                        fromDateString = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(picked.time)
+                                        fromDate = picked.time
+                                        fromDatePickerOpen = false
+                                    },
+                                    calendar.get(Calendar.YEAR),
+                                    calendar.get(Calendar.MONTH),
+                                    calendar.get(Calendar.DAY_OF_MONTH)
+                                ).apply {
+                                    datePicker.maxDate = System.currentTimeMillis()
+                                }.show()
+                            }
+                            if (toDatePickerOpen) {
+                                val calendar = Calendar.getInstance()
+                                DatePickerDialog(
+                                    context,
+                                    { _, year, month, dayOfMonth ->
+                                        val picked = Calendar.getInstance()
+                                        picked.set(year, month, dayOfMonth)
+                                        toDateString = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(picked.time)
+                                        toDate = picked.time
+                                        toDatePickerOpen = false
+                                    },
+                                    calendar.get(Calendar.YEAR),
+                                    calendar.get(Calendar.MONTH),
+                                    calendar.get(Calendar.DAY_OF_MONTH)
+                                ).apply {
+                                    datePicker.maxDate = System.currentTimeMillis()
+                                }.show()
                             }
                         }
 
@@ -292,11 +338,11 @@ fun TransactionHistoryScreen(
                                         onClick = {
                                             valueRange = if (valueRange == range) null else range
                                         },
-                                        label = { 
+                                        label = {
                                             Text(
                                                 label,
                                                 style = MaterialTheme.typography.labelMedium
-                                            ) 
+                                            )
                                         },
                                         colors = FilterChipDefaults.filterChipColors(
                                             selectedContainerColor = MaterialTheme.colorScheme.secondary,
@@ -328,8 +374,8 @@ fun TransactionHistoryScreen(
                         Button(
                             onClick = { filterDialogVisible = false },
                             shape = RoundedCornerShape(12.dp)
-                        ) { 
-                            Text("Apply Filters") 
+                        ) {
+                            Text("Apply Filters")
                         }
                     }
                 }
@@ -337,7 +383,7 @@ fun TransactionHistoryScreen(
         }
     }
 
-    // Transaction detail dialog//
+    // Transaction detail dialog
     selectedTx?.let { tx ->
         AlertDialog(
             onDismissRequest = { selectedTx = null },

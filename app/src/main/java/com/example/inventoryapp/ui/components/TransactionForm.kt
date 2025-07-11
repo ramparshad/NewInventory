@@ -499,7 +499,6 @@ fun TransactionForm(
             // -- VALIDATION & LOGIC --
             Button(
                 onClick = {
-                    // Validate fields
                     serialError = null
                     modelError = null
                     amountError = null
@@ -591,7 +590,8 @@ fun TransactionForm(
                                 return@launch
                             }
                             // Return: only if sold previously
-                            if (type == "Return" && !inventoryRepo.wasSerialSold(serial)) {
+                            val wasSold = inventoryRepo.wasSerialSold(serial)
+                            if (type == "Return" && !wasSold) {
                                 snackbarHostState.showSnackbar("Cannot return: item not sold previously.")
                                 loading = false
                                 return@launch
