@@ -38,6 +38,7 @@ import coil.compose.rememberAsyncImagePainter
 import androidx.navigation.NavController
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
+import com.example.inventoryapp.model.InventoryItem
 import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.model.UserRole
 import kotlinx.coroutines.Dispatchers
@@ -423,6 +424,8 @@ fun TransactionForm(
             }
 
             Spacer(Modifier.height(20.dp))
+
+            // -- FIXED LOGIC STARTS HERE --
             Button(
                 onClick = {
                     // Validate fields
@@ -490,25 +493,56 @@ fun TransactionForm(
                                 aadhaar = aadhaar,
                                 amount = amountDouble ?: 0.0,
                                 description = description,
-                                date = date, // Use the original date string directly
+                                date = date,
                                 quantity = quantityInt ?: 1,
                                 imageUrls = imageUrls,
                                 type = type,
-                                timestamp = parsedDate // Use parsedDate for timestamp field
+                                timestamp = parsedDate
                             )
+
                             val item = inventoryRepo.getItemBySerial(serial)
-                            if (type == "Sale" && (item == null || item.quantity < 1)) {
-                                snackbarHostState.showSnackbar("Cannot sell: item not in inventory or out of stock.")
-                                loading = false
-                                return@launch
-                            } else if (type == "Purchase" && item != null) {
-                                snackbarHostState.showSnackbar("Cannot purchase: serial already exists.")
+                            // Sale: prevent selling more than in stock
+                            if (type == "Sale" && (item == null || item.quantity < (quantityInt ?: 1))) {
+                                snackbarHostState.showSnackbar("Cannot sell: item not in inventory or insufficient stock.")
                                 loading = false
                                 return@launch
                             }
+
                             val result = inventoryRepo.addTransaction(serial, transaction)
-                            loading = false
+
                             if (result is Result.Success) {
+                                // Inventory update for Purchase
+                                if (type == "Purchase") {
+                                    val existingItem = inventoryRepo.getItemBySerial(serial)
+                                    if (existingItem == null) {
+                                        val newItem = InventoryItem(
+                                            serial = serial,
+                                            name = model,
+                                            model = model,
+                                            quantity = quantityInt ?: 1,
+                                            phone = phone,
+                                            aadhaar = aadhaar,
+                                            description = description,
+                                            date = date,
+                                            timestamp = parsedDate,
+                                            imageUrls = imageUrls
+                                        )
+                                        inventoryRepo.addOrUpdateItem(serial, newItem)
+                                    } else {
+                                        val updatedItem = existingItem.copy(
+                                            quantity = existingItem.quantity + (quantityInt ?: 1)
+                                        )
+                                        inventoryRepo.addOrUpdateItem(serial, updatedItem)
+                                    }
+                                }
+                                // Inventory update for Sale
+                                if (type == "Sale" && item != null) {
+                                    val updatedQty = item.quantity - (quantityInt ?: 1)
+                                    val updatedItem = item.copy(quantity = updatedQty.coerceAtLeast(0))
+                                    inventoryRepo.addOrUpdateItem(serial, updatedItem)
+                                }
+
+                                loading = false
                                 showSuccess.value = true
                                 snackbarHostState.showSnackbar("Transaction saved successfully!")
                                 serial = ""
@@ -520,6 +554,7 @@ fun TransactionForm(
                                 quantity = "1"
                                 images = emptyList()
                             } else if (result is Result.Error) {
+                                loading = false
                                 snackbarHostState.showSnackbar(result.exception?.message ?: "Error saving transaction.")
                             }
                         } catch (e: Exception) {
