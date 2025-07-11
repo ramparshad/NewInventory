@@ -18,6 +18,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -103,9 +105,30 @@ fun TransactionForm(
         }
     }
 
-    // For image picker
+    // For image picker (gallery)
     val imgPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         images = uris?.take(5) ?: emptyList()
+    }
+
+    // For image picker (camera)
+    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success && cameraImageUri != null && images.size < 5) {
+            images = images + cameraImageUri!!
+        }
+    }
+    fun createCameraImageUri(): Uri {
+        val imagesDir = context.externalCacheDir
+        val imageFile = java.io.File.createTempFile(
+            "transaction_photo_${System.currentTimeMillis()}",
+            ".jpg",
+            imagesDir
+        )
+        return androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            imageFile
+        )
     }
 
     // Auto model fill for non-purchase
@@ -152,12 +175,39 @@ fun TransactionForm(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            SegmentedButton(
-                options = transactionTypes,
-                selected = type,
-                onSelected = { type = it }
-            )
-            Spacer(Modifier.height(8.dp))
+            // Segmented button for transaction types
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                transactionTypes.forEach { t ->
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 2.dp)
+                            .clickable { type = t },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (type == t) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Box(
+                            Modifier
+                                .padding(vertical = 10.dp)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                t,
+                                color = if (type == t) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = serial,
@@ -381,19 +431,40 @@ fun TransactionForm(
 
             Spacer(Modifier.height(10.dp))
 
-            // For multiple image picker
-            OutlinedButton(
-                onClick = {
-                    imgPicker.launch(PickVisualMediaRequest())
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = images.size < 5 && canEdit && !loading,
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color(0xFFFAF8F4)
-                )
-            ) {
-                Text("Pick Images (max 5)", color = MaterialTheme.colorScheme.primary)
+            // Gallery and Camera pickers
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        imgPicker.launch(PickVisualMediaRequest())
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = images.size < 5 && canEdit && !loading,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color(0xFFFAF8F4)
+                    )
+                ) {
+                    Icon(Icons.Filled.PhotoLibrary, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Gallery", color = MaterialTheme.colorScheme.primary)
+                }
+                OutlinedButton(
+                    onClick = {
+                        val uri = createCameraImageUri()
+                        cameraImageUri = uri
+                        cameraLauncher.launch(uri)
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = images.size < 5 && canEdit && !loading,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color(0xFFFAF8F4)
+                    )
+                ) {
+                    Icon(Icons.Filled.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Camera", color = MaterialTheme.colorScheme.primary)
+                }
             }
 
             // Image thumbnails
@@ -425,7 +496,7 @@ fun TransactionForm(
 
             Spacer(Modifier.height(20.dp))
 
-            // -- FIXED LOGIC STARTS HERE --
+            // -- VALIDATION & LOGIC --
             Button(
                 onClick = {
                     // Validate fields
@@ -497,7 +568,7 @@ fun TransactionForm(
                                 quantity = quantityInt ?: 1,
                                 imageUrls = imageUrls,
                                 type = type,
-                                timestamp = parsedDate
+                                timestamp = System.currentTimeMillis()
                             )
 
                             val item = inventoryRepo.getItemBySerial(serial)
@@ -507,33 +578,43 @@ fun TransactionForm(
                                 loading = false
                                 return@launch
                             }
+                            // Purchase: prevent duplicate serial
+                            if (type == "Purchase" && item != null) {
+                                snackbarHostState.showSnackbar("Cannot purchase: serial already exists in inventory.")
+                                loading = false
+                                return@launch
+                            }
+                            // Repair: only if serial exists
+                            if (type == "Repair" && item == null) {
+                                snackbarHostState.showSnackbar("Cannot repair: serial not in inventory.")
+                                loading = false
+                                return@launch
+                            }
+                            // Return: only if sold previously
+                            if (type == "Return" && !inventoryRepo.wasSerialSold(serial)) {
+                                snackbarHostState.showSnackbar("Cannot return: item not sold previously.")
+                                loading = false
+                                return@launch
+                            }
 
                             val result = inventoryRepo.addTransaction(serial, transaction)
 
                             if (result is Result.Success) {
                                 // Inventory update for Purchase
                                 if (type == "Purchase") {
-                                    val existingItem = inventoryRepo.getItemBySerial(serial)
-                                    if (existingItem == null) {
-                                        val newItem = InventoryItem(
-                                            serial = serial,
-                                            name = model,
-                                            model = model,
-                                            quantity = quantityInt ?: 1,
-                                            phone = phone,
-                                            aadhaar = aadhaar,
-                                            description = description,
-                                            date = date,
-                                            timestamp = parsedDate,
-                                            imageUrls = imageUrls
-                                        )
-                                        inventoryRepo.addOrUpdateItem(serial, newItem)
-                                    } else {
-                                        val updatedItem = existingItem.copy(
-                                            quantity = existingItem.quantity + (quantityInt ?: 1)
-                                        )
-                                        inventoryRepo.addOrUpdateItem(serial, updatedItem)
-                                    }
+                                    val newItem = InventoryItem(
+                                        serial = serial,
+                                        name = model,
+                                        model = model,
+                                        quantity = quantityInt ?: 1,
+                                        phone = phone,
+                                        aadhaar = aadhaar,
+                                        description = description,
+                                        date = date,
+                                        timestamp = System.currentTimeMillis(),
+                                        imageUrls = imageUrls
+                                    )
+                                    inventoryRepo.addOrUpdateItem(serial, newItem)
                                 }
                                 // Inventory update for Sale
                                 if (type == "Sale" && item != null) {

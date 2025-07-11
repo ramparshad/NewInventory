@@ -1,6 +1,7 @@
 package com.example.inventoryapp.ui.screens
 
 import android.net.Uri
+import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.inventoryapp.data.InventoryRepository
@@ -68,6 +70,8 @@ fun TransactionScreen(
     var quantity by remember { mutableStateOf("1") }
     var description by remember { mutableStateOf("") }
     var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var transactionDate by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())) }
+    var datePickerDialogOpen by remember { mutableStateOf(false) }
 
     // Field errors
     var serialError by remember { mutableStateOf<String?>(null) }
@@ -77,23 +81,39 @@ fun TransactionScreen(
     var aadhaarError by remember { mutableStateOf<String?>(null) }
     var amountError by remember { mutableStateOf<String?>(null) }
     var quantityError by remember { mutableStateOf<String?>(null) }
+    var dateError by remember { mutableStateOf<String?>(null) }
 
     // Image picker launcher
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris ->
-        if (uris.size <= 5) {
-            selectedImages = uris
+        if ((selectedImages.size + uris.size) <= 5) {
+            selectedImages = selectedImages + uris
         }
     }
 
-    // Camera launcher (not implemented)
+    // Camera launcher
+    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success) {
-            // Handle camera result
+        if (success && cameraImageUri != null) {
+            if (selectedImages.size < 5) {
+                selectedImages = selectedImages + cameraImageUri!!
+            }
         }
+    }
+
+    fun createImageUri(): Uri {
+        val imagesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val imageFile = kotlin.runCatching {
+            java.io.File.createTempFile(
+                "pic_${System.currentTimeMillis()}",
+                ".jpg",
+                imagesDir
+            )
+        }.getOrNull() ?: java.io.File(imagesDir, "pic_${System.currentTimeMillis()}.jpg")
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", imageFile)
     }
 
     // Validation functions
@@ -149,6 +169,50 @@ fun TransactionScreen(
             quantityError = null
         }
 
+        // Date validation (no future dates)
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val today = sdf.parse(sdf.format(Date()))
+        val selected = kotlin.runCatching { sdf.parse(transactionDate) }.getOrNull()
+        if (selected == null || selected.after(today)) {
+            dateError = "Date cannot be in the future"
+            isValid = false
+        } else {
+            dateError = null
+        }
+
+        // Transaction type validation (inventory-based)
+        val qty = quantity.toIntOrNull() ?: 0
+        val item = inventoryRepo.getItemBySerial(serialNumber)
+        when (selectedTransactionType) {
+            "Sale" -> {
+                if (item == null) {
+                    serialError = "Serial not found in inventory"
+                    isValid = false
+                } else if (item.quantity < qty) {
+                    quantityError = "Insufficient quantity available"
+                    isValid = false
+                }
+            }
+            "Purchase" -> {
+                if (item != null) {
+                    serialError = "Serial already exists in inventory"
+                    isValid = false
+                }
+            }
+            "Repair" -> {
+                if (item == null) {
+                    serialError = "Serial not found in inventory"
+                    isValid = false
+                }
+            }
+            "Return" -> {
+                val wasSold = inventoryRepo.wasSerialSold(serialNumber)
+                if (!wasSold) {
+                    serialError = "Serial not sold previously"
+                    isValid = false
+                }
+            }
+        }
         return isValid
     }
 
@@ -163,31 +227,36 @@ fun TransactionScreen(
         images: List<String>
     ) {
         val existingItem = inventoryRepo.getItemBySerial(serial)
-        if (transactionType == "Purchase") {
-            if (existingItem == null) {
-                val newItem = InventoryItem(
-                    serial = serial,
-                    name = model,
-                    model = model,
-                    quantity = qty,
-                    phone = phone,
-                    aadhaar = aadhaar,
-                    description = description,
-                    date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
-                    timestamp = System.currentTimeMillis(),
-                    imageUrls = images
-                )
-                inventoryRepo.addOrUpdateItem(serial, newItem)
-            } else {
-                val updatedItem = existingItem.copy(quantity = existingItem.quantity + qty)
-                inventoryRepo.addOrUpdateItem(serial, updatedItem)
+        when (transactionType) {
+            "Purchase" -> {
+                if (existingItem == null) {
+                    val newItem = InventoryItem(
+                        serial = serial,
+                        name = model,
+                        model = model,
+                        quantity = qty,
+                        phone = phone,
+                        aadhaar = aadhaar,
+                        description = description,
+                        date = transactionDate,
+                        timestamp = System.currentTimeMillis(),
+                        imageUrls = images
+                    )
+                    inventoryRepo.addOrUpdateItem(serial, newItem)
+                } else {
+                    val updatedItem = existingItem.copy(quantity = existingItem.quantity + qty)
+                    inventoryRepo.addOrUpdateItem(serial, updatedItem)
+                }
             }
-        } else if (transactionType == "Sale" && existingItem != null) {
-            val updatedQty = existingItem.quantity - qty
-            val updatedItem = existingItem.copy(quantity = updatedQty.coerceAtLeast(0))
-            inventoryRepo.addOrUpdateItem(serial, updatedItem)
+            "Sale" -> {
+                if (existingItem != null) {
+                    val updatedQty = existingItem.quantity - qty
+                    val updatedItem = existingItem.copy(quantity = updatedQty.coerceAtLeast(0))
+                    inventoryRepo.addOrUpdateItem(serial, updatedItem)
+                }
+            }
+            // You can add more logic for "Return" and "Repair" if desired
         }
-        // Extend for "Return" and "Repair" if needed
     }
 
     fun submitTransaction() {
@@ -207,7 +276,7 @@ fun TransactionScreen(
                     amount = amount.toDouble(),
                     quantity = quantity.toInt(),
                     description = description.ifBlank { "" },
-                    date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+                    date = transactionDate,
                     timestamp = System.currentTimeMillis(),
                     userRole = userRole.name,
                     images = selectedImages.map { it.toString() }
@@ -215,7 +284,6 @@ fun TransactionScreen(
 
                 val result = inventoryRepo.addTransaction(serialNumber, transaction)
                 if (result is com.example.inventoryapp.data.Result.Success) {
-                    // --- INVENTORY UPDATE LOGIC ---
                     updateInventoryAfterTransaction(
                         transactionType = selectedTransactionType,
                         serial = serialNumber,
@@ -239,6 +307,33 @@ fun TransactionScreen(
         }
     }
 
+    // Date Picker Dialog
+    if (datePickerDialogOpen) {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        DatePickerDialog(
+            context,
+            { _, y, m, d ->
+                val selectedDate = "%04d-%02d-%02d".format(y, m + 1, d)
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val today = sdf.parse(sdf.format(Date()))
+                val selected = kotlin.runCatching { sdf.parse(selectedDate) }.getOrNull()
+                if (selected != null && !selected.after(today)) {
+                    transactionDate = selectedDate
+                    dateError = null
+                } else {
+                    dateError = "Date cannot be in the future"
+                }
+                datePickerDialogOpen = false
+            },
+            year, month, day
+        ).apply {
+            datePicker.maxDate = calendar.timeInMillis
+        }.show()
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -260,7 +355,7 @@ fun TransactionScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Transaction Type Selection
+            // Transaction Type Selection (Segmented Card UI)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -281,12 +376,29 @@ fun TransactionScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         transactionTypes.forEach { type ->
-                            FilterChip(
-                                onClick = { selectedTransactionType = type },
-                                label = { Text(type) },
-                                selected = selectedTransactionType == type,
-                                modifier = Modifier.weight(1f)
-                            )
+                            Card(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(if (selectedTransactionType == type) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent)
+                                    .clickable { selectedTransactionType = type },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (selectedTransactionType == type) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Box(
+                                    Modifier
+                                        .padding(vertical = 10.dp)
+                                        .fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        type,
+                                        color = if (selectedTransactionType == type) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -467,6 +579,20 @@ fun TransactionScreen(
                         modifier = Modifier.fillMaxWidth(),
                         maxLines = 3
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = transactionDate,
+                        onValueChange = {},
+                        label = { Text("Date") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { datePickerDialogOpen = true },
+                        readOnly = true,
+                        isError = dateError != null,
+                        supportingText = dateError?.let { { Text(it) } }
+                    )
                 }
             }
 
@@ -499,7 +625,11 @@ fun TransactionScreen(
                                 Icon(Icons.Default.PhotoLibrary, contentDescription = "Gallery")
                             }
                             IconButton(
-                                onClick = { /* TODO: Implement camera */ },
+                                onClick = {
+                                    val uri = createImageUri()
+                                    cameraImageUri = uri
+                                    cameraLauncher.launch(uri)
+                                },
                                 enabled = selectedImages.size < 5
                             ) {
                                 Icon(Icons.Default.CameraAlt, contentDescription = "Camera")
