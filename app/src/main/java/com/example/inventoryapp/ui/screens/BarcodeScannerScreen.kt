@@ -191,14 +191,14 @@ fun CameraPreview(
         val cameraProvider = cameraProviderFuture.get()
 
         val preview = Preview.Builder()
-            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+            .setTargetResolution(Size(1280, 720))
             .build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
 
         val barcodeScanner = BarcodeScanning.getClient()
         val analysisUseCase = ImageAnalysis.Builder()
-            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+            .setTargetResolution(Size(1280, 720))
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
 
