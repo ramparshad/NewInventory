@@ -166,9 +166,9 @@ fun TransactionScreen(
                     name = model,
                     model = model,
                     quantity = qty,
-                    phone = phone,
-                    aadhaar = aadhaar,
-                    description = description,
+                    phone = phone ?: "",
+                    aadhaar = aadhaar ?: "",
+                    description = description ?: "",
                     date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
                     timestamp = System.currentTimeMillis(),
                     imageUrls = images
