@@ -36,6 +36,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.input.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.window.Dialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -161,7 +162,7 @@ fun InventoryScreen(
                             },
                             isSelected = selectedSerials.contains(item.serial),
                             imageUrls = item.imageUrls,
-                            onImageClick = { imgIdx ->
+                            onImageClick = { imgIdx: Int ->
                                 photoViewerImages = item.imageUrls
                                 photoViewerStartIndex = imgIdx
                                 showPhotoViewer = true
@@ -185,7 +186,7 @@ fun InventoryScreen(
 
             // Photo viewer
             if (showPhotoViewer) {
-                androidx.compose.ui.window.Dialog(onDismissRequest = { showPhotoViewer = false }) {
+                Dialog(onDismissRequest = { showPhotoViewer = false }) {
                     Box(
                         Modifier
                             .fillMaxSize()
