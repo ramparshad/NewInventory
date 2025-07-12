@@ -15,6 +15,7 @@ data class InventoryFilters(
     val date: String? = null
 )
 
+// Make sure InventoryItem has isSold and isInRepair properties.
 class InventoryViewModel(
     private val repo: InventoryRepository,
     val userRole: UserRole
@@ -60,7 +61,7 @@ class InventoryViewModel(
             when (result) {
                 is Result.Success -> {
                     // Remove items with quantity zero, sold or in repair from the database
-                    val validItems = result.data.filter { it.quantity > 0 && !it.isSold && !it.isInRepair }
+                    val validItems = result.data.filter { it.quantity > 0 && (!it.isSold) && (!it.isInRepair) }
                     val removedItems = result.data.filter { it.quantity <= 0 || it.isSold || it.isInRepair }
                     removedItems.forEach { item ->
                         repo.deleteItem(item.serial)
@@ -107,7 +108,7 @@ class InventoryViewModel(
             when (result) {
                 is Result.Success -> {
                     // Remove items with quantity zero, sold or in repair from the database
-                    val validItems = result.data.filter { it.quantity > 0 && !it.isSold && !it.isInRepair }
+                    val validItems = result.data.filter { it.quantity > 0 && (!it.isSold) && (!it.isInRepair) }
                     val removedItems = result.data.filter { it.quantity <= 0 || it.isSold || it.isInRepair }
                     removedItems.forEach { item ->
                         repo.deleteItem(item.serial)

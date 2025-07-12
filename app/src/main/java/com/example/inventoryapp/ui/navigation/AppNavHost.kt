@@ -111,7 +111,7 @@ fun AppNavHost(
             if (userRole == UserRole.ADMIN) {
                 composable(MainScreen.Analytics.route) {
                     showBottomBar = true
-                    AnalyticsScreen(inventoryRepo)
+                    AnalyticsScreen(inventoryRepo = inventoryRepo, userRole = userRole)
                 }
             }
             // Transaction screen with query params
