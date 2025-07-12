@@ -34,10 +34,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.text.input.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.window.Dialog
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -265,14 +262,15 @@ fun InventoryScreen(
                                     viewModel.setFilters(filters.copy(quantity = q))
                                 },
                                 label = { Text("Quantity") },
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                modifier = Modifier.fillMaxWidth()
+                                // Removed keyboardOptions parameter
                             )
                             OutlinedTextField(
                                 value = filters.date ?: "",
                                 onValueChange = { viewModel.setFilters(filters.copy(date = it)) },
                                 label = { Text("Date (yyyy-MM-dd)") },
                                 modifier = Modifier.fillMaxWidth()
+                                // Removed keyboardOptions parameter
                             )
                         }
                     },
