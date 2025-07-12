@@ -1,9 +1,7 @@
 package com.example.inventoryapp.ui.screens
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -24,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
 import com.example.inventoryapp.model.InventoryFilters
 import com.example.inventoryapp.model.InventoryItem
 import com.example.inventoryapp.model.InventoryViewModel
@@ -32,10 +30,6 @@ import com.example.inventoryapp.model.UserRole
 import com.example.inventoryapp.ui.components.InventoryCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.text.input.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,10 +40,10 @@ fun InventoryScreen(
 ) {
     val context = LocalContext.current
     var filterText by remember { mutableStateOf("") }
-    val inventory by viewModel.inventory.observeAsState(emptyList())
-    val loading by viewModel.loading.observeAsState(false)
-    val error by viewModel.error.observeAsState(null)
-    val filters by viewModel.filters.observeAsState(InventoryFilters())
+    val inventory by viewModel.inventory.collectAsState()
+    val loading by viewModel.loading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val filters by viewModel.filters.collectAsState()
     val role = viewModel.userRole
     val sortBy by viewModel.sortBy.collectAsState()
 
@@ -80,9 +74,9 @@ fun InventoryScreen(
     }
 
     // Collect scanned serial from barcode scanner
-    val scannedSerial = navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("scannedSerial")?.observeAsState()
-    LaunchedEffect(scannedSerial?.value) {
-        scannedSerial?.value?.let { serial ->
+    val scannedSerial = navController.currentBackStackEntry?.savedStateHandle?.get<String>("scannedSerial")
+    LaunchedEffect(scannedSerial) {
+        scannedSerial?.let { serial ->
             viewModel.updateSerialFilter(serial)
             navController.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedSerial")
         }
@@ -97,7 +91,6 @@ fun InventoryScreen(
                 .padding(8.dp)
                 .padding(paddingValues)
         ) {
-            // Search bar with filter & barcode icons inside
             OutlinedTextField(
                 value = filterText,
                 onValueChange = {
@@ -136,7 +129,7 @@ fun InventoryScreen(
                     Text("No inventory items found.")
                 }
                 else -> LazyColumn {
-                    itemsIndexed(inventory, key = { _, item -> item.serial }) { idx, item ->
+                    itemsIndexed(inventory, key = { _, item -> item.serial }) { _, item ->
                         InventoryCard(
                             item = item,
                             userRole = role,
@@ -190,7 +183,7 @@ fun InventoryScreen(
                             .fillMaxSize()
                             .background(Color.Black)
                     ) {
-                        val pagerState = remember { mutableStateOf(photoViewerStartIndex) }
+                        var pagerState by remember { mutableStateOf(photoViewerStartIndex) }
                         Row(
                             Modifier
                                 .fillMaxWidth()
@@ -198,19 +191,14 @@ fun InventoryScreen(
                                 .align(Alignment.Center)
                                 .background(Color.Black)
                         ) {
-                            for ((idx, url) in photoViewerImages.withIndex()) {
-                                if (idx == pagerState.value) {
-                                    Image(
-                                        painter = rememberAsyncImagePainter(url),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .fillMaxHeight()
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(16.dp)),
-                                        alignment = Alignment.Center
-                                    )
-                                }
-                            }
+                            AsyncImage(
+                                model = photoViewerImages[pagerState],
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp)),
+                            )
                         }
                         Row(
                             Modifier
@@ -221,8 +209,8 @@ fun InventoryScreen(
                                 Box(
                                     Modifier
                                         .size(12.dp)
-                                        .background(if (pagerState.value == idx) Color.White else Color.Gray, CircleShape)
-                                        .clickable { pagerState.value = idx }
+                                        .background(if (pagerState == idx) Color.White else Color.Gray, CircleShape)
+                                        .clickable { pagerState = idx }
                                 )
                                 Spacer(Modifier.width(8.dp))
                             }
@@ -247,21 +235,18 @@ fun InventoryScreen(
                     title = { Text("Filter Inventory", style = MaterialTheme.typography.headlineSmall) },
                     text = {
                         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            // Serial filter
                             OutlinedTextField(
                                 value = filters.serial ?: "",
                                 onValueChange = { viewModel.setFilters(filters.copy(serial = it)) },
                                 label = { Text("Serial Number") },
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            // Model filter
                             OutlinedTextField(
                                 value = filters.model ?: "",
                                 onValueChange = { viewModel.setFilters(filters.copy(model = it)) },
                                 label = { Text("Model") },
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            // Quantity filter
                             OutlinedTextField(
                                 value = filters.quantity?.toString() ?: "",
                                 onValueChange = {
@@ -270,9 +255,8 @@ fun InventoryScreen(
                                 },
                                 label = { Text("Quantity") },
                                 modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions.Default.copy(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
                             )
-                            // Date filter
                             OutlinedTextField(
                                 value = filters.date ?: "",
                                 onValueChange = { viewModel.setFilters(filters.copy(date = it)) },

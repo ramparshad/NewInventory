@@ -1,5 +1,6 @@
 package com.example.inventoryapp.ui.screens
 
+import android.app.DatePickerDialog
 import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -31,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.model.InventoryItem
 import com.example.inventoryapp.model.Transaction
@@ -56,11 +57,8 @@ fun TransactionScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // States
     var selectedTransactionType by remember { mutableStateOf(prefillType ?: "Sale") }
     var loading by remember { mutableStateOf(false) }
-
-    // Form fields
     var serialNumber by remember { mutableStateOf(prefillSerial ?: "") }
     var modelName by remember { mutableStateOf(prefillModel ?: "") }
     var customerName by remember { mutableStateOf("") }
@@ -73,7 +71,6 @@ fun TransactionScreen(
     var transactionDate by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())) }
     var datePickerDialogOpen by remember { mutableStateOf(false) }
 
-    // Field errors
     var serialError by remember { mutableStateOf<String?>(null) }
     var modelError by remember { mutableStateOf<String?>(null) }
     var customerNameError by remember { mutableStateOf<String?>(null) }
@@ -83,7 +80,6 @@ fun TransactionScreen(
     var quantityError by remember { mutableStateOf<String?>(null) }
     var dateError by remember { mutableStateOf<String?>(null) }
 
-    // Image picker launcher
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris ->
@@ -92,7 +88,6 @@ fun TransactionScreen(
         }
     }
 
-    // Camera launcher
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
@@ -116,60 +111,50 @@ fun TransactionScreen(
         return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", imageFile)
     }
 
-    // Validation functions
     fun validateForm(): Boolean {
         var isValid = true
-
         if (serialNumber.isBlank()) {
             serialError = "Serial number is required"
             isValid = false
         } else {
             serialError = null
         }
-
         if (modelName.isBlank()) {
             modelError = "Model name is required"
             isValid = false
         } else {
             modelError = null
         }
-
         if (customerName.isBlank()) {
             customerNameError = "Customer name is required"
             isValid = false
         } else {
             customerNameError = null
         }
-
         if (phoneNumber.isNotBlank() && phoneNumber.length != 10) {
             phoneError = "Phone number must be 10 digits"
             isValid = false
         } else {
             phoneError = null
         }
-
         if (aadhaarNumber.isNotBlank() && aadhaarNumber.length != 12) {
             aadhaarError = "Aadhaar number must be 12 digits"
             isValid = false
         } else {
             aadhaarError = null
         }
-
         if (amount.isBlank() || amount.toDoubleOrNull() == null || amount.toDouble() <= 0.0) {
             amountError = "Valid amount is required"
             isValid = false
         } else {
             amountError = null
         }
-
         if (quantity.isBlank() || quantity.toIntOrNull() == null || quantity.toInt() <= 0) {
             quantityError = "Valid quantity is required"
             isValid = false
         } else {
             quantityError = null
         }
-
-        // Date validation (no future dates)
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val today = sdf.parse(sdf.format(Date()))
         val selected = kotlin.runCatching { sdf.parse(transactionDate) }.getOrNull()
@@ -179,8 +164,6 @@ fun TransactionScreen(
         } else {
             dateError = null
         }
-
-        // Transaction type validation (inventory-based)
         val qty = quantity.toIntOrNull() ?: 0
         val item = inventoryRepo.getItemBySerial(serialNumber)
         when (selectedTransactionType) {
@@ -255,13 +238,11 @@ fun TransactionScreen(
                     inventoryRepo.addOrUpdateItem(serial, updatedItem)
                 }
             }
-            // You can add more logic for "Return" and "Repair" if desired
         }
     }
 
     fun submitTransaction() {
         if (!validateForm()) return
-
         scope.launch {
             loading = true
             try {
@@ -281,7 +262,6 @@ fun TransactionScreen(
                     userRole = userRole.name,
                     images = selectedImages.map { it.toString() }
                 )
-
                 val result = inventoryRepo.addTransaction(serialNumber, transaction)
                 if (result is com.example.inventoryapp.data.Result.Success) {
                     updateInventoryAfterTransaction(
@@ -307,7 +287,6 @@ fun TransactionScreen(
         }
     }
 
-    // Date Picker Dialog
     if (datePickerDialogOpen) {
         val calendar = Calendar.getInstance()
         val year = calendar.get(Calendar.YEAR)
@@ -355,7 +334,6 @@ fun TransactionScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Transaction Type Selection (Segmented Card UI)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -404,7 +382,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Serial Number & Model
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -461,7 +438,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Customer Information
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -524,7 +500,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Transaction Details
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -596,7 +571,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Image Upload Section
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -644,8 +618,8 @@ fun TransactionScreen(
                         ) {
                             items(selectedImages) { uri ->
                                 Box {
-                                    Image(
-                                        painter = rememberAsyncImagePainter(uri),
+                                    AsyncImage(
+                                        model = uri,
                                         contentDescription = null,
                                         modifier = Modifier
                                             .size(80.dp)
@@ -678,7 +652,6 @@ fun TransactionScreen(
                 }
             }
 
-            // Submit Button
             Button(
                 onClick = { submitTransaction() },
                 modifier = Modifier
