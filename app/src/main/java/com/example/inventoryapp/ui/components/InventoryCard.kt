@@ -23,6 +23,7 @@ import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
 import com.example.inventoryapp.model.InventoryItem
 import com.example.inventoryapp.model.UserRole
+import androidx.compose.foundation.clickable
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
