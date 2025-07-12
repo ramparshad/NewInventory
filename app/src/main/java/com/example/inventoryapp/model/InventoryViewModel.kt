@@ -59,12 +59,18 @@ class InventoryViewModel(
             val result = repo.getAllItems(limit = limit, startAfter = if (paginate) lastInventorySerial else null)
             when (result) {
                 is Result.Success -> {
-                    if (paginate) {
-                        _inventory.postValue((_inventory.value ?: emptyList()) + result.data)
-                    } else {
-                        _inventory.postValue(result.data)
+                    // Remove items with quantity zero, sold or in repair from the database
+                    val validItems = result.data.filter { it.quantity > 0 && !it.isSold && !it.isInRepair }
+                    val removedItems = result.data.filter { it.quantity <= 0 || it.isSold || it.isInRepair }
+                    removedItems.forEach { item ->
+                        repo.deleteItem(item.serial)
                     }
-                    lastInventorySerial = result.data.lastOrNull()?.serial
+                    if (paginate) {
+                        _inventory.postValue((_inventory.value ?: emptyList()) + validItems)
+                    } else {
+                        _inventory.postValue(validItems)
+                    }
+                    lastInventorySerial = validItems.lastOrNull()?.serial
                 }
                 is Result.Error -> {
                     _error.postValue(result.exception?.message ?: "Error loading inventory")
@@ -80,7 +86,6 @@ class InventoryViewModel(
 
     fun searchInventory(query: String) {
         _searchQuery.value = query
-        // Reload inventory with search query instead of local filtering
         loadInventoryWithFilters()
     }
 
@@ -98,16 +103,20 @@ class InventoryViewModel(
         _loading.value = true
         _error.value = null
         viewModelScope.launch(Dispatchers.IO) {
-            // Load more items to account for filtering
-            val result = repo.getAllItems(limit = 500) 
+            val result = repo.getAllItems(limit = 500)
             when (result) {
                 is Result.Success -> {
-                    val allItems = result.data
+                    // Remove items with quantity zero, sold or in repair from the database
+                    val validItems = result.data.filter { it.quantity > 0 && !it.isSold && !it.isInRepair }
+                    val removedItems = result.data.filter { it.quantity <= 0 || it.isSold || it.isInRepair }
+                    removedItems.forEach { item ->
+                        repo.deleteItem(item.serial)
+                    }
                     val filters = _filters.value ?: InventoryFilters()
                     val search = _searchQuery.value
                     val sort = _sortBy.value
 
-                    val filtered = allItems.filter { item ->
+                    val filtered = validItems.filter { item ->
                         (filters.serial.isNullOrBlank() || item.serial.contains(filters.serial!!, ignoreCase = true)) &&
                         (filters.model.isNullOrBlank() || item.model.contains(filters.model!!, ignoreCase = true)) &&
                         (search.isBlank() ||
@@ -190,7 +199,7 @@ class InventoryViewModel(
         }
     }
 
-    fun deleteItem(serial: String, onComplete: (Boolean) -> Unit) {
+    fun deleteItem(serial: String, onComplete: (Boolean) -> Unit = {}) {
         viewModelScope.launch(Dispatchers.IO) {
             val result = repo.deleteItem(serial)
             onComplete(result is Result.Success)

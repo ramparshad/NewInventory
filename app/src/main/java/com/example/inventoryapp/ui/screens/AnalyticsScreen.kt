@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.Transaction
+import com.example.inventoryapp.model.UserRole
 import com.google.firebase.analytics.FirebaseAnalytics
 import androidx.compose.ui.platform.LocalContext
 import android.os.Bundle
@@ -24,12 +25,27 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnalyticsScreen(inventoryRepo: InventoryRepository) {
+fun AnalyticsScreen(
+    inventoryRepo: InventoryRepository,
+    userRole: UserRole
+) {
+    // Only allow admin users
+    if (userRole != UserRole.ADMIN) {
+        Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Analytics available to admin accounts only.", color = Color.Red)
+        }
+        return
+    }
+
     val transactions = remember { mutableStateListOf<Transaction>() }
     val firebaseAnalytics = FirebaseAnalytics.getInstance(LocalContext.current)
 
-    // Load transactions once
+    // Log when the analytics screen is viewed
     LaunchedEffect(Unit) {
+        firebaseAnalytics.logEvent("analytics_screen_viewed", null)
         val result = inventoryRepo.getAllTransactions()
         if (result is Result.Success) {
             transactions.clear()
@@ -75,20 +91,8 @@ fun AnalyticsScreen(inventoryRepo: InventoryRepository) {
         (tx.timestamp in startDateLong..endDateLong)
     }
 
-    val totalsByType = filtered.groupBy { it.type }
-        .mapValues { entry -> entry.value.sumOf { it.amount } }
-    val typeColors = listOf(
-        Color(0xFF4CAF50), // Sale
-        Color(0xFF2196F3), // Purchase
-        Color(0xFFFFC107), // Return
-        Color(0xFFF44336)  // Repair
-    )
-    val typeColorMap = types.filter { it != "All" }.mapIndexed { idx, type -> type to typeColors.getOrElse(idx) { Color.Gray } }.toMap()
-
-    val totalAmount = filtered.sumOf { it.amount }
     val totalSales = filtered.filter { it.type.equals("Sale", true) }.sumOf { it.amount }
     val totalPurchases = filtered.filter { it.type.equals("Purchase", true) }.sumOf { it.amount }
-    val totalReturns = filtered.filter { it.type.equals("Return", true) }.sumOf { it.amount }
     val totalRepairs = filtered.filter { it.type.equals("Repair", true) }.sumOf { it.amount }
 
     Scaffold(
@@ -100,97 +104,107 @@ fun AnalyticsScreen(inventoryRepo: InventoryRepository) {
                 .padding(16.dp)
         ) {
             // Filters UI
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                DropdownMenuBox(
-                    label = "Type",
-                    options = types,
-                    selectedOption = selectedType,
-                    onOptionSelected = { selectedType = it }
-                )
-                Spacer(Modifier.width(8.dp))
-                DropdownMenuBox(
-                    label = "Model",
-                    options = models,
-                    selectedOption = selectedModel,
-                    onOptionSelected = { selectedModel = it }
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Row {
-                OutlinedTextField(
-                    value = minAmount,
-                    onValueChange = { minAmount = it },
-                    label = { Text("Min Amount") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = maxAmount,
-                    onValueChange = { maxAmount = it },
-                    label = { Text("Max Amount") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Row {
-                OutlinedTextField(
-                    value = startDate,
-                    onValueChange = { startDate = it },
-                    label = { Text("Start Date") },
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = endDate,
-                    onValueChange = { endDate = it },
-                    label = { Text("End Date") },
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            AnalyticsFilters(
+                types = types,
+                models = models,
+                selectedType = selectedType,
+                onTypeSelected = { selectedType = it },
+                selectedModel = selectedModel,
+                onModelSelected = { selectedModel = it },
+                minAmount = minAmount,
+                onMinAmountChange = { minAmount = it },
+                maxAmount = maxAmount,
+                onMaxAmountChange = { maxAmount = it },
+                startDate = startDate,
+                onStartDateChange = { startDate = it },
+                endDate = endDate,
+                onEndDateChange = { endDate = it }
+            )
 
             Spacer(Modifier.height(16.dp))
-
-            // Totals
-            Text("Total: $totalAmount")
-            Text("Sales: $totalSales")
-            Text("Purchases: $totalPurchases")
-            Text("Returns: $totalReturns")
-            Text("Repairs: $totalRepairs")
-
+            Text("Total Sales: ₹$totalSales", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+            Text("Total Purchases: ₹$totalPurchases", color = Color(0xFF2196F3), fontWeight = FontWeight.Bold)
+            Text("Total Repairs: ₹$totalRepairs", color = Color(0xFFFFA726), fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(16.dp))
 
-            // List
-            if (filtered.isEmpty()) {
-                Text("No transactions for selected filters.")
-            } else {
-                LazyColumn {
-                    items(filtered.size) { idx ->
-                        val tx = filtered[idx]
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = typeColorMap[tx.type] ?: Color.LightGray
-                            )
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    "Type: ${tx.type} | Model: ${tx.model}",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    "Amount: ${tx.amount} | Date: ${tx.date}",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
-                    }
+            Divider()
+
+            LazyColumn {
+                items(filtered) { tx ->
+                    TransactionStatsCard(tx)
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AnalyticsFilters(
+    types: List<String>,
+    models: List<String>,
+    selectedType: String,
+    onTypeSelected: (String) -> Unit,
+    selectedModel: String,
+    onModelSelected: (String) -> Unit,
+    minAmount: String,
+    onMinAmountChange: (String) -> Unit,
+    maxAmount: String,
+    onMaxAmountChange: (String) -> Unit,
+    startDate: String,
+    onStartDateChange: (String) -> Unit,
+    endDate: String,
+    onEndDateChange: (String) -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        DropdownMenuBox(
+            label = "Type",
+            options = types,
+            selectedOption = selectedType,
+            onOptionSelected = onTypeSelected
+        )
+        Spacer(Modifier.width(8.dp))
+        DropdownMenuBox(
+            label = "Model",
+            options = models,
+            selectedOption = selectedModel,
+            onOptionSelected = onModelSelected
+        )
+    }
+    Spacer(Modifier.height(8.dp))
+    Row {
+        OutlinedTextField(
+            value = minAmount,
+            onValueChange = onMinAmountChange,
+            label = { Text("Min Amount") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        OutlinedTextField(
+            value = maxAmount,
+            onValueChange = onMaxAmountChange,
+            label = { Text("Max Amount") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.weight(1f)
+        )
+    }
+    Spacer(Modifier.height(8.dp))
+    Row {
+        OutlinedTextField(
+            value = startDate,
+            onValueChange = onStartDateChange,
+            label = { Text("Start Date (yyyy-MM-dd)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        OutlinedTextField(
+            value = endDate,
+            onValueChange = onEndDateChange,
+            label = { Text("End Date (yyyy-MM-dd)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -202,23 +216,43 @@ fun DropdownMenuBox(
     onOptionSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Box(Modifier.padding(4.dp)) {
-        OutlinedButton(onClick = { expanded = true }) {
-            Text("$label: $selectedOption")
-        }
+    Box {
+        OutlinedTextField(
+            value = selectedOption,
+            onValueChange = {},
+            label = { Text(label) },
+            modifier = Modifier
+                .width(140.dp)
+                .clickable { expanded = true },
+            readOnly = true
+        )
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
             options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option) },
-                    onClick = {
-                        onOptionSelected(option)
-                        expanded = false
-                    }
-                )
+                DropdownMenuItem(text = { Text(option) }, onClick = {
+                    onOptionSelected(option)
+                    expanded = false
+                })
             }
+        }
+    }
+}
+
+@Composable
+fun TransactionStatsCard(tx: Transaction) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text("Type: ${tx.type} | Model: ${tx.model} | Amount: ₹${tx.amount}", fontWeight = FontWeight.Bold)
+            Text("Serial: ${tx.serial}")
+            Text("Date: ${tx.date}")
+            Text("Customer: ${tx.customerName}")
         }
     }
 }

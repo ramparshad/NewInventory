@@ -66,21 +66,22 @@ fun TransactionScreen(
     var phoneNumber by remember { mutableStateOf("") }
     var aadhaarNumber by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("1") }
     var description by remember { mutableStateOf("") }
     var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var transactionDate by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())) }
     var datePickerDialogOpen by remember { mutableStateOf(false) }
 
+    // Error states
     var serialError by remember { mutableStateOf<String?>(null) }
     var modelError by remember { mutableStateOf<String?>(null) }
     var customerNameError by remember { mutableStateOf<String?>(null) }
     var phoneError by remember { mutableStateOf<String?>(null) }
     var aadhaarError by remember { mutableStateOf<String?>(null) }
     var amountError by remember { mutableStateOf<String?>(null) }
-    var quantityError by remember { mutableStateOf<String?>(null) }
     var dateError by remember { mutableStateOf<String?>(null) }
 
+    // Camera
+    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris ->
@@ -88,8 +89,6 @@ fun TransactionScreen(
             selectedImages = selectedImages + uris
         }
     }
-
-    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
@@ -99,7 +98,6 @@ fun TransactionScreen(
             }
         }
     }
-
     fun createImageUri(): Uri {
         val imagesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         val imageFile = kotlin.runCatching {
@@ -112,9 +110,65 @@ fun TransactionScreen(
         return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", imageFile)
     }
 
+    // Barcode scanner integration for serial field
+    val scannedSerialLive = navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("scannedSerial")
+    val scannedSerialState = scannedSerialLive?.observeAsState()
+    val scannedSerial = scannedSerialState?.value
+    LaunchedEffect(scannedSerial) {
+        scannedSerial?.let { serial ->
+            serialNumber = serial
+            navController.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedSerial")
+        }
+    }
+
+    // Model autofill and disable field if found in inventory
+    var item: InventoryItem? by remember { mutableStateOf(null) }
+    LaunchedEffect(serialNumber) {
+        if (serialNumber.isNotBlank()) {
+            loading = true
+            try {
+                val foundItem = inventoryRepo.getItemBySerial(serialNumber)
+                item = foundItem
+                if (foundItem != null) {
+                    modelName = foundItem.model
+                }
+            } catch (_: Exception) {
+                item = null
+            }
+            loading = false
+        }
+    }
+
+    // Date picker
+    if (datePickerDialogOpen) {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        DatePickerDialog(
+            context,
+            { _, y, m, d ->
+                val selectedDate = "%04d-%02d-%02d".format(y, m + 1, d)
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val today = sdf.parse(sdf.format(Date()))
+                val selected = kotlin.runCatching { sdf.parse(selectedDate) }.getOrNull()
+                if (selected != null && !selected.after(today)) {
+                    transactionDate = selectedDate
+                    dateError = null
+                } else {
+                    dateError = "Date cannot be in the future"
+                }
+                datePickerDialogOpen = false
+            },
+            year, month, day
+        ).apply {
+            datePicker.maxDate = calendar.timeInMillis
+        }.show()
+    }
+
+    // Validation
     suspend fun validateFormSuspend(): Boolean {
         var isValid = true
-        val qty = quantity.toIntOrNull() ?: 0
         val item = inventoryRepo.getItemBySerial(serialNumber)
         if (serialNumber.isBlank()) {
             serialError = "Serial number is required"
@@ -122,7 +176,9 @@ fun TransactionScreen(
         } else {
             serialError = null
         }
-        if (modelName.isBlank()) {
+        if ((selectedTransactionType == "Purchase" && modelName.isBlank())
+            || (selectedTransactionType != "Purchase" && (item?.model.isNullOrBlank()))
+        ) {
             modelError = "Model name is required"
             isValid = false
         } else {
@@ -152,12 +208,6 @@ fun TransactionScreen(
         } else {
             amountError = null
         }
-        if (quantity.isBlank() || qty <= 0) {
-            quantityError = "Valid quantity is required"
-            isValid = false
-        } else {
-            quantityError = null
-        }
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val today = sdf.parse(sdf.format(Date()))
         val selected = kotlin.runCatching { sdf.parse(transactionDate) }.getOrNull()
@@ -169,11 +219,8 @@ fun TransactionScreen(
         }
         when (selectedTransactionType) {
             "Sale" -> {
-                if (item == null) {
-                    serialError = "Serial not found in inventory"
-                    isValid = false
-                } else if (item.quantity < qty) {
-                    quantityError = "Insufficient quantity available"
+                if (item == null || item.quantity < 1 || item.isSold || item.isInRepair) {
+                    serialError = "Serial not in inventory or unavailable"
                     isValid = false
                 }
             }
@@ -184,15 +231,14 @@ fun TransactionScreen(
                 }
             }
             "Repair" -> {
-                if (item == null) {
-                    serialError = "Serial not found in inventory"
+                if (item == null || item.isSold) {
+                    serialError = "Serial not found in inventory or already sold"
                     isValid = false
                 }
             }
             "Return" -> {
-                val wasSold = inventoryRepo.wasSerialSold(serialNumber)
-                if (!wasSold) {
-                    serialError = "Serial not sold previously"
+                if (item == null || (!item.isSold && !item.isInRepair)) {
+                    serialError = "Serial must be sold or marked in repair before return"
                     isValid = false
                 }
             }
@@ -204,7 +250,6 @@ fun TransactionScreen(
         transactionType: String,
         serial: String,
         model: String,
-        qty: Int,
         phone: String,
         aadhaar: String,
         description: String,
@@ -218,24 +263,34 @@ fun TransactionScreen(
                         serial = serial,
                         name = model,
                         model = model,
-                        quantity = qty,
+                        quantity = 1,
                         phone = phone,
                         aadhaar = aadhaar,
                         description = description,
                         date = transactionDate,
                         timestamp = System.currentTimeMillis(),
-                        imageUrls = images
+                        imageUrls = images,
+                        isSold = false,
+                        isInRepair = false
                     )
                     inventoryRepo.addOrUpdateItem(serial, newItem)
-                } else {
-                    val updatedItem = existingItem.copy(quantity = existingItem.quantity + qty)
-                    inventoryRepo.addOrUpdateItem(serial, updatedItem)
                 }
             }
             "Sale" -> {
                 if (existingItem != null) {
-                    val updatedQty = existingItem.quantity - qty
-                    val updatedItem = existingItem.copy(quantity = updatedQty.coerceAtLeast(0))
+                    val updatedItem = existingItem.copy(quantity = 0, isSold = true)
+                    inventoryRepo.addOrUpdateItem(serial, updatedItem)
+                }
+            }
+            "Repair" -> {
+                if (existingItem != null) {
+                    val updatedItem = existingItem.copy(isInRepair = true)
+                    inventoryRepo.addOrUpdateItem(serial, updatedItem)
+                }
+            }
+            "Return" -> {
+                if (existingItem != null) {
+                    val updatedItem = existingItem.copy(quantity = 1, isSold = false, isInRepair = false)
                     inventoryRepo.addOrUpdateItem(serial, updatedItem)
                 }
             }
@@ -257,7 +312,7 @@ fun TransactionScreen(
                     phoneNumber = phoneNumber.ifBlank { "" },
                     aadhaarNumber = aadhaarNumber.ifBlank { "" },
                     amount = amount.toDouble(),
-                    quantity = quantity.toInt(),
+                    quantity = 1,
                     description = description.ifBlank { "" },
                     date = transactionDate,
                     timestamp = System.currentTimeMillis(),
@@ -270,7 +325,6 @@ fun TransactionScreen(
                         transactionType = selectedTransactionType,
                         serial = serialNumber,
                         model = modelName,
-                        qty = quantity.toInt(),
                         phone = phoneNumber.ifBlank { "" },
                         aadhaar = aadhaarNumber.ifBlank { "" },
                         description = description.ifBlank { "" },
@@ -287,32 +341,6 @@ fun TransactionScreen(
                 loading = false
             }
         }
-    }
-
-    if (datePickerDialogOpen) {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        DatePickerDialog(
-            context,
-            { _, y, m, d ->
-                val selectedDate = "%04d-%02d-%02d".format(y, m + 1, d)
-                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val today = sdf.parse(sdf.format(Date()))
-                val selected = kotlin.runCatching { sdf.parse(selectedDate) }.getOrNull()
-                if (selected != null && !selected.after(today)) {
-                    transactionDate = selectedDate
-                    dateError = null
-                } else {
-                    dateError = "Date cannot be in the future"
-                }
-                datePickerDialogOpen = false
-            },
-            year, month, day
-        ).apply {
-            datePicker.maxDate = calendar.timeInMillis
-        }.show()
     }
 
     Scaffold(
@@ -349,35 +377,22 @@ fun TransactionScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-
                     val transactionTypes = listOf("Sale", "Purchase", "Return", "Repair")
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         transactionTypes.forEach { type ->
-                            Card(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .background(if (selectedTransactionType == type) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent)
-                                    .clickable { selectedTransactionType = type },
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (selectedTransactionType == type) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-                                ),
-                                shape = RoundedCornerShape(8.dp)
+                            Button(
+                                onClick = { selectedTransactionType = type },
+                                enabled = !loading,
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (selectedTransactionType == type)
+                                        MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                                )
                             ) {
-                                Box(
-                                    Modifier
-                                        .padding(vertical = 10.dp)
-                                        .fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        type,
-                                        color = if (selectedTransactionType == type) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
+                                Text(type)
                             }
                         }
                     }
@@ -409,9 +424,7 @@ fun TransactionScreen(
                             Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan Barcode")
                         }
                     }
-
                     Spacer(modifier = Modifier.height(12.dp))
-
                     OutlinedTextField(
                         value = serialNumber,
                         onValueChange = {
@@ -423,17 +436,13 @@ fun TransactionScreen(
                         isError = serialError != null,
                         supportingText = serialError?.let { { Text(it) } }
                     )
-
                     Spacer(modifier = Modifier.height(8.dp))
-
                     OutlinedTextField(
                         value = modelName,
-                        onValueChange = {
-                            modelName = it
-                            modelError = null
-                        },
+                        onValueChange = {},
                         label = { Text("Model Name") },
                         modifier = Modifier.fillMaxWidth(),
+                        enabled = selectedTransactionType == "Purchase",
                         isError = modelError != null,
                         supportingText = modelError?.let { { Text(it) } }
                     )
@@ -453,7 +462,6 @@ fun TransactionScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-
                     OutlinedTextField(
                         value = customerName,
                         onValueChange = {
@@ -465,9 +473,7 @@ fun TransactionScreen(
                         isError = customerNameError != null,
                         supportingText = customerNameError?.let { { Text(it) } }
                     )
-
                     Spacer(modifier = Modifier.height(8.dp))
-
                     OutlinedTextField(
                         value = phoneNumber,
                         onValueChange = {
@@ -482,9 +488,7 @@ fun TransactionScreen(
                         isError = phoneError != null,
                         supportingText = phoneError?.let { { Text(it) } }
                     )
-
                     Spacer(modifier = Modifier.height(8.dp))
-
                     OutlinedTextField(
                         value = aadhaarNumber,
                         onValueChange = {
@@ -515,40 +519,28 @@ fun TransactionScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
+                    OutlinedTextField(
+                        value = amount,
+                        onValueChange = {
+                            amount = it
+                            amountError = null
+                        },
+                        label = { Text("Amount") },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = amount,
-                            onValueChange = {
-                                amount = it
-                                amountError = null
-                            },
-                            label = { Text("Amount") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            isError = amountError != null,
-                            supportingText = amountError?.let { { Text(it) } }
-                        )
-
-                        OutlinedTextField(
-                            value = quantity,
-                            onValueChange = {
-                                quantity = it
-                                quantityError = null
-                            },
-                            label = { Text("Quantity") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            isError = quantityError != null,
-                            supportingText = quantityError?.let { { Text(it) } }
-                        )
-                    }
-
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        isError = amountError != null,
+                        supportingText = amountError?.let { { Text(it) } }
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
-
+                    // Quantity always 1 and disabled
+                    OutlinedTextField(
+                        value = "1",
+                        onValueChange = {},
+                        label = { Text("Quantity") },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = false
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
@@ -556,9 +548,7 @@ fun TransactionScreen(
                         modifier = Modifier.fillMaxWidth(),
                         maxLines = 3
                     )
-
                     Spacer(modifier = Modifier.height(8.dp))
-
                     OutlinedTextField(
                         value = transactionDate,
                         onValueChange = {},
@@ -590,7 +580,6 @@ fun TransactionScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -612,7 +601,6 @@ fun TransactionScreen(
                             }
                         }
                     }
-
                     if (selectedImages.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(12.dp))
                         LazyRow(
@@ -673,7 +661,6 @@ fun TransactionScreen(
                     Text("Save Transaction", fontSize = 16.sp)
                 }
             }
-
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
