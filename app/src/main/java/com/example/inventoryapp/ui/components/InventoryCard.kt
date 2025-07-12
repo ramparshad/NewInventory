@@ -38,6 +38,8 @@ fun InventoryCard(
     onSelectionChange: ((Boolean) -> Unit)? = null,
     isSelected: Boolean = false,
     modifier: Modifier = Modifier
+	imageUrls: List<String>,
+    onImageClick: (Int) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
     var expanded by remember { mutableStateOf(false) }

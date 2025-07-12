@@ -10,7 +10,9 @@ import kotlinx.coroutines.launch
 
 data class InventoryFilters(
     val serial: String? = null,
-    val model: String? = null
+    val model: String? = null,
+    val quantity: Int? = null,
+    val date: String? = null
 )
 
 class InventoryViewModel(

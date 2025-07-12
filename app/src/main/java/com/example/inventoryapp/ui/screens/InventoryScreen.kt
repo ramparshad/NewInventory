@@ -82,7 +82,8 @@ fun InventoryScreen(
 
     // Collect scanned serial from barcode scanner
     val scannedSerialLive = navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("scannedSerial")
-    val scannedSerial by scannedSerialLive?.observeAsState()
+    val scannedSerialState = scannedSerialLive?.observeAsState()
+    val scannedSerial = scannedSerialState?.value
     LaunchedEffect(scannedSerial) {
         scannedSerial?.let { serial ->
             viewModel.updateSerialFilter(serial)
@@ -201,7 +202,7 @@ fun InventoryScreen(
                                 .background(Color.Black)
                         ) {
                             AsyncImage(
-                                model = photoViewerImages[pagerState],
+                                model = photoViewerImages.getOrNull(pagerState),
                                 contentDescription = null,
                                 modifier = Modifier
                                     .fillMaxHeight()
