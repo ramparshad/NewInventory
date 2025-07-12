@@ -37,8 +37,8 @@ fun InventoryCard(
     onArchive: () -> Unit = {},
     onSelectionChange: ((Boolean) -> Unit)? = null,
     isSelected: Boolean = false,
-    modifier: Modifier = Modifier
-	imageUrls: List<String>,
+    modifier: Modifier = Modifier,
+    imageUrls: List<String>,
     onImageClick: (Int) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
@@ -70,14 +70,14 @@ fun InventoryCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // --- IMAGES ---
-            if (item.imageUrls.isNotEmpty()) {
+            if (imageUrls.isNotEmpty()) {
                 Row(
                     modifier = Modifier
                         .horizontalScroll(rememberScrollState())
                         .fillMaxWidth()
                         .height(110.dp)
                 ) {
-                    item.imageUrls.forEach { url ->
+                    imageUrls.forEachIndexed { idx, url ->
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
                                 .data(url)
@@ -87,6 +87,7 @@ fun InventoryCard(
                             modifier = Modifier
                                 .size(100.dp)
                                 .padding(end = 8.dp)
+                                .clickable { onImageClick(idx) }
                         )
                     }
                 }
