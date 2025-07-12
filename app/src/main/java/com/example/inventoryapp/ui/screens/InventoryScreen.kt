@@ -1,7 +1,9 @@
 package com.example.inventoryapp.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -30,6 +32,10 @@ import com.example.inventoryapp.model.UserRole
 import com.example.inventoryapp.ui.components.InventoryCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,10 +46,10 @@ fun InventoryScreen(
 ) {
     val context = LocalContext.current
     var filterText by remember { mutableStateOf("") }
-    val inventory by viewModel.inventory.collectAsState()
-    val loading by viewModel.loading.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val filters by viewModel.filters.collectAsState()
+    val inventory by viewModel.inventory.observeAsState(emptyList())
+    val loading by viewModel.loading.observeAsState(false)
+    val error by viewModel.error.observeAsState()
+    val filters by viewModel.filters.observeAsState(InventoryFilters())
     val role = viewModel.userRole
     val sortBy by viewModel.sortBy.collectAsState()
 
@@ -74,7 +80,8 @@ fun InventoryScreen(
     }
 
     // Collect scanned serial from barcode scanner
-    val scannedSerial = navController.currentBackStackEntry?.savedStateHandle?.get<String>("scannedSerial")
+    val scannedSerialLive = navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("scannedSerial")
+    val scannedSerial by scannedSerialLive?.observeAsState()
     LaunchedEffect(scannedSerial) {
         scannedSerial?.let { serial ->
             viewModel.updateSerialFilter(serial)
@@ -119,7 +126,7 @@ fun InventoryScreen(
             Spacer(Modifier.height(8.dp))
 
             when {
-                loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                loading == true -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
                 error != null -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -153,6 +160,7 @@ fun InventoryScreen(
                                 selectedSerials = if (checked) selectedSerials + item.serial else selectedSerials - item.serial
                             },
                             isSelected = selectedSerials.contains(item.serial),
+                            imageUrls = item.imageUrls,
                             onImageClick = { imgIdx ->
                                 photoViewerImages = item.imageUrls
                                 photoViewerStartIndex = imgIdx
@@ -177,7 +185,7 @@ fun InventoryScreen(
 
             // Photo viewer
             if (showPhotoViewer) {
-                Dialog(onDismissRequest = { showPhotoViewer = false }) {
+                androidx.compose.ui.window.Dialog(onDismissRequest = { showPhotoViewer = false }) {
                     Box(
                         Modifier
                             .fillMaxSize()
@@ -255,7 +263,7 @@ fun InventoryScreen(
                                 },
                                 label = { Text("Quantity") },
                                 modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions.Default.copy(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                             )
                             OutlinedTextField(
                                 value = filters.date ?: "",

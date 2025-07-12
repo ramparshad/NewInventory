@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -111,8 +112,10 @@ fun TransactionScreen(
         return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", imageFile)
     }
 
-    fun validateForm(): Boolean {
+    suspend fun validateFormSuspend(): Boolean {
         var isValid = true
+        val qty = quantity.toIntOrNull() ?: 0
+        val item = inventoryRepo.getItemBySerial(serialNumber)
         if (serialNumber.isBlank()) {
             serialError = "Serial number is required"
             isValid = false
@@ -149,7 +152,7 @@ fun TransactionScreen(
         } else {
             amountError = null
         }
-        if (quantity.isBlank() || quantity.toIntOrNull() == null || quantity.toInt() <= 0) {
+        if (quantity.isBlank() || qty <= 0) {
             quantityError = "Valid quantity is required"
             isValid = false
         } else {
@@ -164,8 +167,6 @@ fun TransactionScreen(
         } else {
             dateError = null
         }
-        val qty = quantity.toIntOrNull() ?: 0
-        val item = inventoryRepo.getItemBySerial(serialNumber)
         when (selectedTransactionType) {
             "Sale" -> {
                 if (item == null) {
@@ -242,8 +243,9 @@ fun TransactionScreen(
     }
 
     fun submitTransaction() {
-        if (!validateForm()) return
         scope.launch {
+            val isValid = validateFormSuspend()
+            if (!isValid) return@launch
             loading = true
             try {
                 val transaction = Transaction(
