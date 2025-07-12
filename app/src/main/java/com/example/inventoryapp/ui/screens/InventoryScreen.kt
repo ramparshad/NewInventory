@@ -1,8 +1,5 @@
 package com.example.inventoryapp.ui.screens
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,23 +17,28 @@ import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.inventoryapp.model.InventoryFilters
 import com.example.inventoryapp.model.InventoryItem
+import com.example.inventoryapp.model.InventoryViewModel
 import com.example.inventoryapp.model.UserRole
 import com.example.inventoryapp.ui.components.InventoryCard
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.window.Dialog
 import java.io.File
 import java.io.FileOutputStream
 
@@ -45,95 +47,77 @@ import java.io.FileOutputStream
 fun InventoryScreen(
     navController: NavController,
     viewModel: InventoryViewModel,
-    role: UserRole,
-    navToBarcodeScanner: (() -> Unit)? = null,
+    inventoryRepo: com.example.inventoryapp.data.InventoryRepository
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-
     var filterText by remember { mutableStateOf("") }
-    var filterDialogVisible by remember { mutableStateOf(false) }
+    val inventory by viewModel.inventory.observeAsState(emptyList())
+    val loading by viewModel.loading.observeAsState(false)
+    val error by viewModel.error.observeAsState()
+    val filters by viewModel.filters.observeAsState(InventoryFilters())
+    val role = viewModel.userRole
+    val sortBy by viewModel.sortBy.collectAsState()
 
-    val inventory by viewModel.inventory.collectAsState()
+    var sortMenuExpanded by remember { mutableStateOf(false) }
     var selectedSerials by remember { mutableStateOf(setOf<String>()) }
+    val allSelected = inventory.isNotEmpty() && inventory.all { selectedSerials.contains(it.serial) }
+
     var selectedItem by remember { mutableStateOf<InventoryItem?>(null) }
+    var filterDialogVisible by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+
     var showPhotoViewer by remember { mutableStateOf(false) }
     var photoViewerImages by remember { mutableStateOf<List<String>>(emptyList()) }
     var photoViewerStartIndex by remember { mutableStateOf(0) }
+    val scope = rememberCoroutineScope()
+
+    // pinch-to-zoom state for photo viewer
     var zoom by remember { mutableStateOf(1f) }
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
     var downloading by remember { mutableStateOf(false) }
 
-    // Internet Connectivity
-    val isConnected = remember {
-        derivedStateOf {
-            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            cm.activeNetwork?.let { network ->
-                cm.getNetworkCapabilities(network)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            } ?: false
+    // Auto-refresh every 30 seconds but only update UI if changed
+    var lastInventory by remember { mutableStateOf<List<InventoryItem>>(emptyList()) }
+    LaunchedEffect(inventory) { lastInventory = inventory }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(30_000)
+            val result = inventoryRepo.getAllItems(limit = 100)
+            if (result is com.example.inventoryapp.data.Result.Success && result.data != lastInventory) {
+                viewModel.loadInventory()
+            }
         }
     }
 
-    // Snackbar on no internet
-    LaunchedEffect(isConnected.value) {
-        if (!isConnected.value) {
-            snackbarHostState.showSnackbar("Internet is not connected. This page might be old")
+    // Remove items with quantity zero, sold, or in repair from inventory
+    LaunchedEffect(inventory) {
+        inventory.forEach { item ->
+            if (item.quantity <= 0 || item.isSold || item.isInRepair) {
+                scope.launch { inventoryRepo.deleteItem(item.serial) }
+            }
         }
     }
 
-    // Barcode scanner integration for search bar
+    // Collect scanned serial from barcode scanner
     val scannedSerialLive = navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("scannedSerial")
     val scannedSerialState = scannedSerialLive?.observeAsState()
     val scannedSerial = scannedSerialState?.value
     LaunchedEffect(scannedSerial) {
         scannedSerial?.let { serial ->
-            filterText = serial
-            viewModel.searchInventory(serial)
+            viewModel.updateSerialFilter(serial)
             navController.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedSerial")
         }
     }
 
-    // Remove items with quantity zero, sold, or in repair
-    LaunchedEffect(inventory) {
-        inventory.forEach { item ->
-            if (item.quantity <= 0 || item.isSold || item.isInRepair) {
-                viewModel.deleteItem(item.serial)
-            }
-        }
-    }
-
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text("Inventory") },
-                actions = {
-                    IconButton(onClick = { viewModel.loadInventory() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                    IconButton(onClick = { filterDialogVisible = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filter")
-                    }
-                    IconButton(onClick = {
-                        if (navToBarcodeScanner != null) {
-                            navToBarcodeScanner()
-                        } else {
-                            navController.navigate("barcode_scanner")
-                        }
-                    }) {
-                        Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan IMEI/Serial")
-                    }
-                }
-            )
-        }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(8.dp)
                 .padding(paddingValues)
-                .padding(horizontal = 8.dp)
         ) {
             OutlinedTextField(
                 value = filterText,
@@ -142,146 +126,93 @@ fun InventoryScreen(
                     viewModel.searchInventory(it)
                 },
                 placeholder = { Text("Search inventory...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    Row {
+                        IconButton(onClick = { filterDialogVisible = true }) {
+                            Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                        }
+                        IconButton(onClick = { navController.navigate("barcode_scanner") }) {
+                            Icon(Icons.Default.QrCodeScanner, contentDescription = "Barcode")
+                        }
+                        IconButton(onClick = { viewModel.loadInventory() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 4.dp)
             )
+            Spacer(Modifier.height(8.dp))
 
             when {
-                viewModel.loading.value -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                loading == true -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-                viewModel.error.value != null -> {
-                    Text(viewModel.error.value ?: "Unknown error", color = MaterialTheme.colorScheme.error)
+                error != null -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(error ?: "Unknown error", color = MaterialTheme.colorScheme.error)
                 }
-                inventory.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No inventory items found.")
-                    }
+                inventory.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No inventory items found.")
                 }
-                else -> {
-                    LazyColumn {
-                        itemsIndexed(inventory, key = { _, item -> item.serial }) { _, item ->
-                            InventoryCard(
-                                item = item,
-                                userRole = role,
-                                onClick = { selectedItem = item },
-                                onEdit = { navController.navigate("edit_inventory/${item.serial}") },
-                                onDelete = {
-                                    // Remove the item completely
-                                    viewModel.deleteItem(item.serial)
-                                    snackbarHostState.showSnackbar("Item deleted")
-                                },
-                                onAddTransaction = {
-                                    navController.navigate("transaction?prefillSerial=${item.serial}&prefillModel=${item.model}")
-                                },
-                                onViewHistory = {
-                                    navController.navigate("transaction_history?serial=${item.serial}")
-                                },
-                                onArchive = { /* archive not used */ },
-                                onSelectionChange = { checked ->
-                                    selectedSerials = if (checked) selectedSerials + item.serial else selectedSerials - item.serial
-                                },
-                                isSelected = selectedSerials.contains(item.serial),
-                                imageUrls = item.imageUrls,
-                                onImageClick = { imgIdx: Int ->
-                                    photoViewerImages = item.imageUrls
-                                    photoViewerStartIndex = imgIdx
-                                    showPhotoViewer = true
-                                    zoom = 1f
-                                    offsetX = 0f
-                                    offsetY = 0f
+                else -> LazyColumn {
+                    itemsIndexed(inventory, key = { _, item -> item.serial }) { _, item ->
+                        InventoryCard(
+                            item = item,
+                            userRole = role,
+                            onClick = { selectedItem = item },
+                            onEdit = { /* implement if needed */ },
+                            onDelete = {
+                                scope.launch {
+                                    val result = inventoryRepo.deleteItem(item.serial)
+                                    if (result is com.example.inventoryapp.data.Result.Success) {
+                                        viewModel.loadInventory()
+                                        snackbarHostState.showSnackbar("Item deleted")
+                                    } else if (result is com.example.inventoryapp.data.Result.Error) {
+                                        snackbarHostState.showSnackbar(result.exception?.message ?: "Delete failed!")
+                                    }
                                 }
-                            )
-                        }
+                            },
+                            onAddTransaction = { /* implement if needed */ },
+                            onViewHistory = { /* implement if needed */ },
+                            onArchive = { /* archive not used */ },
+                            onSelectionChange = { checked ->
+                                selectedSerials = if (checked) selectedSerials + item.serial else selectedSerials - item.serial
+                            },
+                            isSelected = selectedSerials.contains(item.serial),
+                            imageUrls = item.imageUrls,
+                            onImageClick = { imgIdx: Int ->
+                                photoViewerImages = item.imageUrls
+                                photoViewerStartIndex = imgIdx
+                                showPhotoViewer = true
+                                // reset pinch-to-zoom state
+                                zoom = 1f
+                                offsetX = 0f
+                                offsetY = 0f
+                            }
+                        )
                     }
                 }
             }
-        }
 
-        // Item detail dialog
-        if (selectedItem != null) {
-            AlertDialog(
-                onDismissRequest = { selectedItem = null },
-                title = { Text(selectedItem?.name ?: "Item Details") },
-                text = {
-                    Text(
-                        "Model: ${selectedItem?.model}\nSerial: ${selectedItem?.serial}\nQuantity: ${selectedItem?.quantity}\nDescription: ${selectedItem?.description}"
-                    )
-                },
-                confirmButton = {
-                    Button(onClick = { selectedItem = null }) { Text("Close") }
-                }
-            )
-        }
+            // Item detail dialog
+            if (selectedItem != null) {
+                AlertDialog(
+                    onDismissRequest = { selectedItem = null },
+                    title = { Text(selectedItem?.name ?: "Item Details") },
+                    text = { Text("Model: ${selectedItem?.model}\nSerial: ${selectedItem?.serial}\nQuantity: ${selectedItem?.quantity}\nDescription: ${selectedItem?.description}") },
+                    confirmButton = {
+                        Button(onClick = { selectedItem = null }) { Text("Close") }
+                    }
+                )
+            }
 
-        // Photo viewer dialog (with pinch to zoom and download)
-        if (showPhotoViewer && photoViewerImages.isNotEmpty()) {
-            val imgUrl = photoViewerImages.getOrNull(photoViewerStartIndex)
-            AlertDialog(
-                onDismissRequest = { showPhotoViewer = false },
-                confirmButton = {
-                    Row {
-                        Button(
-                            onClick = {
-                                val nextIdx = (photoViewerStartIndex + 1) % photoViewerImages.size
-                                photoViewerStartIndex = nextIdx
-                                zoom = 1f
-                                offsetX = 0f
-                                offsetY = 0f
-                            }
-                        ) {
-                            Text("Next")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                val prevIdx = (photoViewerStartIndex - 1 + photoViewerImages.size) % photoViewerImages.size
-                                photoViewerStartIndex = prevIdx
-                                zoom = 1f
-                                offsetX = 0f
-                                offsetY = 0f
-                            }
-                        ) {
-                            Text("Previous")
-                        }
-                    }
-                },
-                dismissButton = {
-                    Row {
-                        Button(
-                            onClick = {
-                                downloading = true
-                                imgUrl?.let { url ->
-                                    // Download logic
-                                    val fileName = "inventory_image_${System.currentTimeMillis()}.jpg"
-                                    downloadImage(context, url, fileName,
-                                        onDownloadComplete = {
-                                            downloading = false
-                                            snackbarHostState.showSnackbar("Downloaded to Pictures/$fileName")
-                                        },
-                                        onDownloadError = {
-                                            downloading = false
-                                            snackbarHostState.showSnackbar("Download failed")
-                                        }
-                                    )
-                                }
-                            },
-                            enabled = !downloading
-                        ) {
-                            if (downloading) CircularProgressIndicator(modifier = Modifier.size(16.dp))
-                            else Text("Download")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { showPhotoViewer = false }) { Text("Close") }
-                    }
-                },
-                text = {
+            // Photo viewer with pinch-to-zoom and download
+            if (showPhotoViewer && photoViewerImages.isNotEmpty()) {
+                Dialog(onDismissRequest = { showPhotoViewer = false }) {
                     Box(
-                        modifier = Modifier
+                        Modifier
                             .fillMaxWidth()
                             .height(350.dp)
                             .background(Color.Black)
@@ -294,57 +225,130 @@ fun InventoryScreen(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        imgUrl?.let {
-                            AsyncImage(
-                                model = it,
-                                contentDescription = "Inventory Image",
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth()
-                                    .graphicsLayer(
-                                        scaleX = zoom,
-                                        scaleY = zoom,
-                                        translationX = offsetX,
-                                        translationY = offsetY
-                                    ),
-                                contentScale = ContentScale.Fit
-                            )
+                        AsyncImage(
+                            model = photoViewerImages.getOrNull(photoViewerStartIndex),
+                            contentDescription = "Inventory Image",
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth()
+                                .graphicsLayer(
+                                    scaleX = zoom,
+                                    scaleY = zoom,
+                                    translationX = offsetX,
+                                    translationY = offsetY
+                                ),
+                        )
+
+                        Row(
+                            Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(16.dp)
+                        ) {
+                            photoViewerImages.forEachIndexed { idx, _ ->
+                                Box(
+                                    Modifier
+                                        .size(12.dp)
+                                        .background(if (photoViewerStartIndex == idx) Color.White else Color.Gray, CircleShape)
+                                        .clickable { photoViewerStartIndex = idx }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                            }
+                        }
+                        IconButton(
+                            onClick = {
+                                downloading = true
+                                val url = photoViewerImages.getOrNull(photoViewerStartIndex)
+                                url?.let { downloadImage(context, it, "inventory_image_${System.currentTimeMillis()}.jpg",
+                                    onDownloadComplete = {
+                                        downloading = false
+                                        // You can show a snackbar or toast here if desired
+                                    },
+                                    onDownloadError = {
+                                        downloading = false
+                                    }
+                                ) }
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .background(Color.Black.copy(alpha = 0.6f), CircleShape),
+                            enabled = !downloading
+                        ) {
+                            if (downloading) CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                            else Icon(Icons.Default.Download, contentDescription = "Download", tint = Color.White)
+                        }
+                        IconButton(
+                            onClick = { showPhotoViewer = false },
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(8.dp)
+                                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                        ) {
+                            Icon(Icons.Default.Photo, contentDescription = "Close", tint = Color.White)
                         }
                     }
                 }
-            )
-        }
+            }
 
-        // Filter dialog (example, adjust as needed)
-        if (filterDialogVisible) {
-            AlertDialog(
-                onDismissRequest = { filterDialogVisible = false },
-                title = { Text("Filter Inventory", style = MaterialTheme.typography.headlineSmall) },
-                text = {
-                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        OutlinedTextField(
-                            value = viewModel.filters.value.serial ?: "",
-                            onValueChange = { viewModel.setFilters(viewModel.filters.value.copy(serial = it)) },
-                            label = { Text("Serial Number") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        OutlinedTextField(
-                            value = viewModel.filters.value.model ?: "",
-                            onValueChange = { viewModel.setFilters(viewModel.filters.value.copy(model = it)) },
-                            label = { Text("Model") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Button(onClick = { filterDialogVisible = false }) { Text("Apply") }
+            // Filter dialog
+            if (filterDialogVisible) {
+                AlertDialog(
+                    onDismissRequest = { filterDialogVisible = false },
+                    title = { Text("Filter Inventory", style = MaterialTheme.typography.headlineSmall) },
+                    text = {
+                        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            OutlinedTextField(
+                                value = filters.serial ?: "",
+                                onValueChange = { viewModel.setFilters(filters.copy(serial = it)) },
+                                label = { Text("Serial Number") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = filters.model ?: "",
+                                onValueChange = { viewModel.setFilters(filters.copy(model = it)) },
+                                label = { Text("Model") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = filters.quantity?.toString() ?: "",
+                                onValueChange = {
+                                    val q = it.toIntOrNull()
+                                    viewModel.setFilters(filters.copy(quantity = q))
+                                },
+                                label = { Text("Quantity") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = filters.date ?: "",
+                                onValueChange = { viewModel.setFilters(filters.copy(date = it)) },
+                                label = { Text("Date (yyyy-MM-dd)") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(
+                                onClick = {
+                                    viewModel.setFilters(InventoryFilters())
+                                    filterDialogVisible = false
+                                }
+                            ) { Text("Clear") }
+                            Button(
+                                onClick = { filterDialogVisible = false },
+                                shape = RoundedCornerShape(12.dp)
+                            ) { Text("Apply") }
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     }
 }
 
 // Utility function to download image from URL
 fun downloadImage(
-    context: Context,
+    context: android.content.Context,
     url: String,
     fileName: String,
     onDownloadComplete: () -> Unit,
