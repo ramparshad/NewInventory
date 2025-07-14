@@ -216,8 +216,8 @@ fun TransactionHistoryScreen(
                                 "repair" -> Color(0xFFFFA726)
                                 "return" -> Color(0xFFBDBDBD)
                                 else -> MaterialTheme.colorScheme.surface
-                            },
-                            deletedInfo = tx.deletedInfo // Make sure Transaction model has deletedInfo property!
+                            }
+                            // FIX: removed deletedInfo parameter
                         )
                     }
                 }
