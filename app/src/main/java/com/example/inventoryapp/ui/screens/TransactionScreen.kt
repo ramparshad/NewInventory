@@ -5,10 +5,10 @@ import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -122,7 +122,7 @@ fun TransactionScreen(
         }
     }
 
-    // Model autofill and disable field if found in inventory
+    // Model autofill if found in inventory (for non-purchase transactions)
     var item: InventoryItem? by remember { mutableStateOf(null) }
     LaunchedEffect(serialNumber) {
         if (serialNumber.isNotBlank()) {
@@ -130,7 +130,7 @@ fun TransactionScreen(
             try {
                 val foundItem = inventoryRepo.getItemBySerial(serialNumber)
                 item = foundItem
-                if (foundItem != null) {
+                if (foundItem != null && selectedTransactionType != "Purchase") {
                     modelName = foundItem.model
                 }
             } catch (_: Exception) {
@@ -177,9 +177,7 @@ fun TransactionScreen(
         } else {
             serialError = null
         }
-        if ((selectedTransactionType == "Purchase" && modelName.isBlank())
-            || (selectedTransactionType != "Purchase" && (item?.model.isNullOrBlank()))
-        ) {
+        if (modelName.isBlank()) {
             modelError = "Model name is required"
             isValid = false
         } else {
@@ -440,10 +438,13 @@ fun TransactionScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = modelName,
-                        onValueChange = {},
+                        onValueChange = {
+                            modelName = it
+                            modelError = null
+                        },
                         label = { Text("Model Name") },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = selectedTransactionType == "Purchase",
+                        enabled = true,
                         isError = modelError != null,
                         supportingText = modelError?.let { { Text(it) } }
                     )

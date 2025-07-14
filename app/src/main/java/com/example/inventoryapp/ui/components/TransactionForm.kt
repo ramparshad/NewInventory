@@ -118,7 +118,7 @@ fun TransactionForm(
         }
     }
     fun createCameraImageUri(): Uri {
-        val imagesDir = context.externalCacheDir
+        val imagesDir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
         val imageFile = java.io.File.createTempFile(
             "transaction_photo_${System.currentTimeMillis()}",
             ".jpg",
@@ -250,7 +250,7 @@ fun TransactionForm(
                     .fillMaxWidth()
                     .focusRequester(modelFocus),
                 singleLine = true,
-                enabled = canEdit && !loading && type == "Purchase",
+                enabled = canEdit && !loading, // <-- FIX: allow model always editable
                 isError = modelError != null,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
