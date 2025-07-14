@@ -118,7 +118,10 @@ fun InventoryScreen(
         ) {
             OutlinedTextField(
                 value = filterText,
-                onValueChange = { filterText = it; viewModel.searchInventory(it) },
+                onValueChange = {
+                    filterText = it
+                    viewModel.searchInventory(it)
+                },
                 placeholder = { Text("Search inventory...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
