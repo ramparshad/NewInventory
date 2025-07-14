@@ -14,7 +14,7 @@ data class InventoryItem(
     val description: String = "",               // Optional: notes or description
     val date: String = "",                      // Creation/purchase date ("yyyy-MM-dd")
     val timestamp: Long = 0L,                   // Unix time in millis for sorting/filtering
-    val imageUrls: List<String> = emptyList()   // Supports multiple images per item
+    val imageUrls: List<String> = emptyList(),   // Supports multiple images per item
     val isSold: Boolean = false,
     val isInRepair: Boolean = false
 )
