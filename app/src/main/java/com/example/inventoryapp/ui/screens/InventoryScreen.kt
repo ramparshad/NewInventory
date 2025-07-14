@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -117,10 +118,7 @@ fun InventoryScreen(
         ) {
             OutlinedTextField(
                 value = filterText,
-                onValueChange = {
-                    filterText = it
-                    viewModel.searchInventory(it)
-                },
+                onValueChange = { filterText = it; viewModel.searchInventory(it) },
                 placeholder = { Text("Search inventory...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
@@ -173,7 +171,7 @@ fun InventoryScreen(
                             onAddTransaction = { /* implement if needed */ },
                             onViewHistory = { /* implement if needed */ },
                             onArchive = { /* archive not used */ },
-                            onSelectionChange = { checked ->
+                            onSelectionChange = { checked: Boolean ->
                                 selectedSerials = if (checked) selectedSerials + item.serial else selectedSerials - item.serial
                             },
                             isSelected = selectedSerials.contains(item.serial),
@@ -302,8 +300,8 @@ fun InventoryScreen(
                             )
                             OutlinedTextField(
                                 value = filters.quantity?.toString() ?: "",
-                                onValueChange = {
-                                    val q = it.toIntOrNull()
+                                onValueChange = { value: String ->
+                                    val q = value.toIntOrNull()
                                     viewModel.setFilters(filters.copy(quantity = q))
                                 },
                                 label = { Text("Quantity") },
