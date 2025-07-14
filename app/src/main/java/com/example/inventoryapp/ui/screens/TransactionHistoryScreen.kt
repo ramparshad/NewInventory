@@ -32,6 +32,7 @@ import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.model.UserRole
+import com.example.inventoryapp.utils.downloadImage
 import com.example.inventoryapp.ui.components.TransactionHistoryCard
 import kotlinx.coroutines.launch
 import java.io.File
@@ -497,25 +498,5 @@ fun TransactionHistoryScreen(
                 }
             )
         }
-    }
-}
-
-// Only ONE definition of downloadImage, here and not elsewhere.
-fun downloadImage(
-    context: Context,
-    url: String,
-    fileName: String,
-    onDownloadComplete: () -> Unit,
-    onDownloadError: () -> Unit
-) {
-    try {
-        val input = java.net.URL(url).openStream()
-        val picturesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES) ?: context.filesDir
-        val file = File(picturesDir, fileName)
-        val output = FileOutputStream(file)
-        input.use { inp -> output.use { outp -> inp.copyTo(outp) } }
-        onDownloadComplete()
-    } catch (e: Exception) {
-        onDownloadError()
     }
 }

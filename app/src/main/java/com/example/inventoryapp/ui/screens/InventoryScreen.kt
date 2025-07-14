@@ -35,6 +35,7 @@ import com.example.inventoryapp.model.InventoryFilters
 import com.example.inventoryapp.model.InventoryItem
 import com.example.inventoryapp.model.InventoryViewModel
 import com.example.inventoryapp.model.UserRole
+import com.example.inventoryapp.utils.downloadImage
 import com.example.inventoryapp.ui.components.InventoryCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -336,25 +337,5 @@ fun InventoryScreen(
                 )
             }
         }
-    }
-}
-
-// Single definition for downloadImage. Remove any duplicates elsewhere.
-fun downloadImage(
-    context: Context,
-    url: String,
-    fileName: String,
-    onDownloadComplete: () -> Unit,
-    onDownloadError: () -> Unit
-) {
-    try {
-        val input = java.net.URL(url).openStream()
-        val picturesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES) ?: context.filesDir
-        val file = File(picturesDir, fileName)
-        val output = FileOutputStream(file)
-        input.use { inp -> output.use { outp -> inp.copyTo(outp) } }
-        onDownloadComplete()
-    } catch (e: Exception) {
-        onDownloadError()
     }
 }

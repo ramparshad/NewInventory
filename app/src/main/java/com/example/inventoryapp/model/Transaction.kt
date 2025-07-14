@@ -11,13 +11,14 @@ data class Transaction(
     val amount: Double = 0.0,
     val quantity: Int = 1,
     val description: String? = null,
-    val date: String = "",          // Date as String (yyyy-MM-dd)
-    val timestamp: Long = 0L,       // Unix time millis
+    val date: String = "",
+    val timestamp: Long = 0L,
     val userRole: String = "",
     val images: List<String> = emptyList(),
     // Legacy fields for backward compatibility
     val phone: String = phoneNumber ?: "",
     val aadhaar: String = aadhaarNumber ?: "",
     val user: String = userRole,
-    val imageUrls: List<String> = images
+    val imageUrls: List<String> = images,
+    val deletedInfo: DeletedInfo? = null // <--- ADD THIS LINE
 )
