@@ -2,9 +2,6 @@ package com.example.inventoryapp.ui.screens
 
 import android.app.DatePickerDialog
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
 import android.os.Environment
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -12,7 +9,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
@@ -25,7 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -61,20 +57,17 @@ fun TransactionHistoryScreen(
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    // Filter state
     var selectedSaleType by remember { mutableStateOf<String?>(null) }
     var fromDate by remember { mutableStateOf<Date?>(null) }
     var toDate by remember { mutableStateOf<Date?>(null) }
     var valueRange by remember { mutableStateOf<Pair<Double?, Double?>?>(null) }
 
-    // Date picker state
     var fromDatePickerOpen by remember { mutableStateOf(false) }
     var toDatePickerOpen by remember { mutableStateOf(false) }
     var fromDateString by remember { mutableStateOf("") }
     var toDateString by remember { mutableStateOf("") }
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
-    // For image viewer
     var showImageViewer by remember { mutableStateOf(false) }
     var viewerImages by remember { mutableStateOf<List<String>>(emptyList()) }
     var viewerStartIndex by remember { mutableStateOf(0) }
@@ -83,7 +76,6 @@ fun TransactionHistoryScreen(
     var offsetY by remember { mutableStateOf(0f) }
     var downloading by remember { mutableStateOf(false) }
 
-    // Load transactions
     LaunchedEffect(Unit) {
         val result = inventoryRepo.getAllTransactions()
         if (result is Result.Success) {
@@ -93,7 +85,6 @@ fun TransactionHistoryScreen(
         }
     }
 
-    // Barcode scan result handling
     if (navController != null) {
         val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
         LaunchedEffect(savedStateHandle?.get<String>("scannedSerial")) {
@@ -105,7 +96,6 @@ fun TransactionHistoryScreen(
         }
     }
 
-    // Filtering logic
     val filteredTx = transactions
         .filter { tx ->
             (searchText.isBlank() ||
@@ -226,14 +216,13 @@ fun TransactionHistoryScreen(
                                 "return" -> Color(0xFFBDBDBD)
                                 else -> MaterialTheme.colorScheme.surface
                             },
-                            deletedInfo = tx.deletedInfo // Pass deleted info to card
+                            deletedInfo = tx.deletedInfo
                         )
                     }
                 }
             }
         }
 
-        // Filter dialog with date pickers
         if (filterDialogVisible) {
             AlertDialog(
                 onDismissRequest = { filterDialogVisible = false },
@@ -245,7 +234,6 @@ fun TransactionHistoryScreen(
                         verticalArrangement = Arrangement.spacedBy(20.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Transaction Type Section
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Transaction Type", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                             val saleTypes = listOf("sale", "purchase", "return", "repair")
@@ -263,8 +251,6 @@ fun TransactionHistoryScreen(
                                 }
                             }
                         }
-
-                        // Date Range Section with DatePicker
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Date Range", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -294,16 +280,13 @@ fun TransactionHistoryScreen(
                                 )
                             }
                         }
-
-                        // Amount Range Section...
-                        // (Keep your existing logic for range selection)
+                        // Amount Range Section (add if needed)
                     }
                 },
                 confirmButton = {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(
                             onClick = {
-                                // Reset filters
                                 selectedSaleType = null
                                 fromDate = null
                                 toDate = null
@@ -327,7 +310,6 @@ fun TransactionHistoryScreen(
             )
         }
 
-        // DatePickerDialogs for filter
         if (fromDatePickerOpen) {
             val calendar = Calendar.getInstance()
             DatePickerDialog(
@@ -361,7 +343,6 @@ fun TransactionHistoryScreen(
             ).apply { datePicker.maxDate = System.currentTimeMillis() }.show()
         }
 
-        // Transaction detail dialog (with pinch to zoom/download for images)
         selectedTx?.let { tx ->
             AlertDialog(
                 onDismissRequest = { selectedTx = null },
@@ -381,7 +362,7 @@ fun TransactionHistoryScreen(
                             Text(
                                 "deleted by ${tx.deletedInfo.deletedBy} at ${tx.deletedInfo.deletedAt}",
                                 color = Color.Red,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                             )
                         }
                         Spacer(Modifier.height(8.dp))
@@ -412,7 +393,7 @@ fun TransactionHistoryScreen(
                                                 .build(),
                                             contentDescription = null,
                                             modifier = Modifier.fillMaxSize(),
-                                            contentScale = ContentScale.Fit
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
                                         )
                                     }
                                 }
@@ -426,7 +407,6 @@ fun TransactionHistoryScreen(
             )
         }
 
-        // Image viewer dialog with pinch to zoom and download
         if (showImageViewer && viewerImages.isNotEmpty()) {
             val imgUrl = viewerImages.getOrNull(viewerStartIndex)
             AlertDialog(
@@ -464,11 +444,9 @@ fun TransactionHistoryScreen(
                                     downloadImage(context, url, fileName,
                                         onDownloadComplete = {
                                             downloading = false
-                                            // Show snackbar or toast for download success
                                         },
                                         onDownloadError = {
                                             downloading = false
-                                            // Show snackbar or toast for download error
                                         }
                                     )
                                 }
@@ -512,7 +490,7 @@ fun TransactionHistoryScreen(
                                         translationX = offsetX,
                                         translationY = offsetY
                                     ),
-                                contentScale = ContentScale.Fit
+                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
                             )
                         }
                     }
@@ -522,7 +500,6 @@ fun TransactionHistoryScreen(
     }
 }
 
-// Utility function to download image from URL
 fun downloadImage(
     context: Context,
     url: String,

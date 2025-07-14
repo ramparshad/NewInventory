@@ -71,13 +71,11 @@ fun InventoryScreen(
     var photoViewerStartIndex by remember { mutableStateOf(0) }
     val scope = rememberCoroutineScope()
 
-    // pinch-to-zoom state for photo viewer
     var zoom by remember { mutableStateOf(1f) }
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
     var downloading by remember { mutableStateOf(false) }
 
-    // Auto-refresh every 30 seconds but only update UI if changed
     var lastInventory by remember { mutableStateOf<List<InventoryItem>>(emptyList()) }
     LaunchedEffect(inventory) { lastInventory = inventory }
     LaunchedEffect(Unit) {
@@ -90,7 +88,6 @@ fun InventoryScreen(
         }
     }
 
-    // Remove items with quantity zero, sold, or in repair from inventory
     LaunchedEffect(inventory) {
         inventory.forEach { item ->
             if (item.quantity <= 0 || item.isSold || item.isInRepair) {
@@ -99,7 +96,6 @@ fun InventoryScreen(
         }
     }
 
-    // Collect scanned serial from barcode scanner
     val scannedSerialLive = navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("scannedSerial")
     val scannedSerialState = scannedSerialLive?.observeAsState()
     val scannedSerial = scannedSerialState?.value
@@ -186,7 +182,6 @@ fun InventoryScreen(
                                 photoViewerImages = item.imageUrls
                                 photoViewerStartIndex = imgIdx
                                 showPhotoViewer = true
-                                // reset pinch-to-zoom state
                                 zoom = 1f
                                 offsetX = 0f
                                 offsetY = 0f
@@ -196,7 +191,6 @@ fun InventoryScreen(
                 }
             }
 
-            // Item detail dialog
             if (selectedItem != null) {
                 AlertDialog(
                     onDismissRequest = { selectedItem = null },
@@ -208,7 +202,6 @@ fun InventoryScreen(
                 )
             }
 
-            // Photo viewer with pinch-to-zoom and download
             if (showPhotoViewer && photoViewerImages.isNotEmpty()) {
                 Dialog(onDismissRequest = { showPhotoViewer = false }) {
                     Box(
@@ -261,7 +254,6 @@ fun InventoryScreen(
                                 url?.let { downloadImage(context, it, "inventory_image_${System.currentTimeMillis()}.jpg",
                                     onDownloadComplete = {
                                         downloading = false
-                                        // You can show a snackbar or toast here if desired
                                     },
                                     onDownloadError = {
                                         downloading = false
@@ -290,7 +282,6 @@ fun InventoryScreen(
                 }
             }
 
-            // Filter dialog
             if (filterDialogVisible) {
                 AlertDialog(
                     onDismissRequest = { filterDialogVisible = false },
@@ -346,7 +337,6 @@ fun InventoryScreen(
     }
 }
 
-// Utility function to download image from URL
 fun downloadImage(
     context: android.content.Context,
     url: String,
@@ -357,8 +347,8 @@ fun downloadImage(
     try {
         val input = java.net.URL(url).openStream()
         val picturesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES) ?: context.filesDir
-        val file = File(picturesDir, fileName)
-        val output = FileOutputStream(file)
+        val file = java.io.File(picturesDir, fileName)
+        val output = java.io.FileOutputStream(file)
         input.use { inp -> output.use { outp -> inp.copyTo(outp) } }
         onDownloadComplete()
     } catch (e: Exception) {
