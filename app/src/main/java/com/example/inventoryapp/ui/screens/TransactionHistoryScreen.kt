@@ -216,7 +216,7 @@ fun TransactionHistoryScreen(
                                 "return" -> Color(0xFFBDBDBD)
                                 else -> MaterialTheme.colorScheme.surface
                             },
-                            deletedInfo = tx.deletedInfo
+                            deletedInfo = tx.deletedInfo // Make sure Transaction model has deletedInfo property!
                         )
                     }
                 }
@@ -500,6 +500,7 @@ fun TransactionHistoryScreen(
     }
 }
 
+// Only ONE definition of downloadImage, here and not elsewhere.
 fun downloadImage(
     context: Context,
     url: String,

@@ -2,6 +2,7 @@ package com.example.inventoryapp.ui.screens
 
 import android.net.Uri
 import android.os.Environment
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -338,8 +339,9 @@ fun InventoryScreen(
     }
 }
 
+// Single definition for downloadImage. Remove any duplicates elsewhere.
 fun downloadImage(
-    context: android.content.Context,
+    context: Context,
     url: String,
     fileName: String,
     onDownloadComplete: () -> Unit,
@@ -348,8 +350,8 @@ fun downloadImage(
     try {
         val input = java.net.URL(url).openStream()
         val picturesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES) ?: context.filesDir
-        val file = java.io.File(picturesDir, fileName)
-        val output = java.io.FileOutputStream(file)
+        val file = File(picturesDir, fileName)
+        val output = FileOutputStream(file)
         input.use { inp -> output.use { outp -> inp.copyTo(outp) } }
         onDownloadComplete()
     } catch (e: Exception) {
