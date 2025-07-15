@@ -42,6 +42,8 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.runtime.livedata.observeAsState
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -171,13 +173,13 @@ fun TransactionScreen(
     suspend fun validateFormSuspend(): Boolean {
         var isValid = true
         val item = inventoryRepo.getItemBySerial(serialNumber)
-        if (serialNumber.isBlank()) {
+        if ("serial" in requiredFields && serialNumber.isBlank()) {
             serialError = "Serial number is required"
             isValid = false
         } else {
             serialError = null
         }
-        if (modelName.isBlank()) {
+        if ("model" in requiredFields && modelName.isBlank()) {
             modelError = "Model name is required"
             isValid = false
         } else {
@@ -201,7 +203,7 @@ fun TransactionScreen(
         } else {
             aadhaarError = null
         }
-        if (amount.isBlank() || amount.toDoubleOrNull() == null || amount.toDouble() <= 0.0) {
+        if ("amount" in requiredFields && (amount.isBlank() || amount.toDoubleOrNull() == null || amount.toDouble() <= 0.0)) {
             amountError = "Valid amount is required"
             isValid = false
         } else {
@@ -210,7 +212,7 @@ fun TransactionScreen(
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val today = sdf.parse(sdf.format(Date()))
         val selected = kotlin.runCatching { sdf.parse(transactionDate) }.getOrNull()
-        if (selected == null || selected.after(today)) {
+        if ("date" in requiredFields && (selected == null || selected.after(today))) {
             dateError = "Date cannot be in the future"
             isValid = false
         } else {
@@ -296,12 +298,29 @@ fun TransactionScreen(
         }
     }
 
+    // Upload images to Firebase Storage and get URLs
+    suspend fun uploadImagesAndGetUrls(uris: List<Uri>): List<String> {
+        val storage = FirebaseStorage.getInstance().reference
+        val urls = mutableListOf<String>()
+        for ((index, uri) in uris.withIndex()) {
+            val ref = storage.child("transactions/${serialNumber}_${System.currentTimeMillis()}_${index}.jpg")
+            ref.putFile(uri).await()
+            urls += ref.downloadUrl.await().toString()
+        }
+        return urls
+    }
+
     fun submitTransaction() {
         scope.launch {
             val isValid = validateFormSuspend()
             if (!isValid) return@launch
             loading = true
             try {
+                val imageUrls = if (selectedImages.isNotEmpty()) {
+                    uploadImagesAndGetUrls(selectedImages)
+                } else {
+                    emptyList()
+                }
                 val transaction = Transaction(
                     id = "",
                     serial = serialNumber,
@@ -316,7 +335,7 @@ fun TransactionScreen(
                     date = transactionDate,
                     timestamp = System.currentTimeMillis(),
                     userRole = userRole.name,
-                    images = selectedImages.map { it.toString() }
+                    images = imageUrls
                 )
                 val result = inventoryRepo.addTransaction(serialNumber, transaction)
                 if (result is com.example.inventoryapp.data.Result.Success) {
@@ -327,7 +346,7 @@ fun TransactionScreen(
                         phone = phoneNumber.ifBlank { "" },
                         aadhaar = aadhaarNumber.ifBlank { "" },
                         description = description.ifBlank { "" },
-                        images = selectedImages.map { it.toString() }
+                        images = imageUrls
                     )
                     snackbarHostState.showSnackbar("Transaction & Inventory updated successfully")
                     navController.popBackStack()
@@ -341,6 +360,10 @@ fun TransactionScreen(
             }
         }
     }
+
+    // Transaction type split into two lines
+    val transactionTypesLine1 = listOf("Purchase", "Return")
+    val transactionTypesLine2 = listOf("Sale", "Repair")
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -363,6 +386,7 @@ fun TransactionScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Transaction Type Selector Split into Two Lines
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -375,13 +399,31 @@ fun TransactionScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    val transactionTypes = listOf("Sale", "Purchase", "Return", "Repair")
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        transactionTypes.forEach { type ->
+                        transactionTypesLine1.forEach { type ->
+                            Button(
+                                onClick = { selectedTransactionType = type },
+                                enabled = !loading,
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (selectedTransactionType == type)
+                                        MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                Text(type)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        transactionTypesLine2.forEach { type ->
                             Button(
                                 onClick = { selectedTransactionType = type },
                                 enabled = !loading,
@@ -398,6 +440,7 @@ fun TransactionScreen(
                 }
             }
 
+            // Item Details Card with Barcode Scan
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -451,6 +494,7 @@ fun TransactionScreen(
                 }
             }
 
+            // Customer Information Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -508,6 +552,7 @@ fun TransactionScreen(
                 }
             }
 
+            // Transaction Details Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -565,6 +610,7 @@ fun TransactionScreen(
                 }
             }
 
+            // Images Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
