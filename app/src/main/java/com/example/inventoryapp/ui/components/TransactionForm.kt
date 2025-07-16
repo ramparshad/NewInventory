@@ -88,6 +88,7 @@ fun TransactionForm(
     var modelError by remember { mutableStateOf<String?>(null) }
     var amountError by remember { mutableStateOf<String?>(null) }
     var quantityError by remember { mutableStateOf<String?>(null) }
+    var imageLimitError by remember { mutableStateOf<String?>(null) }
 
     val serialFocus = remember { FocusRequester() }
     val modelFocus = remember { FocusRequester() }
@@ -111,11 +112,8 @@ fun TransactionForm(
     // Permissions state/messages
     var galleryDeniedReason by remember { mutableStateOf<String?>(null) }
     var cameraDeniedReason by remember { mutableStateOf<String?>(null) }
-    var imageLimitError by remember { mutableStateOf<String?>(null) }
 
     val maxImages = 10
-
-    // Modal bottom sheet for source selection
     var imageSourceSheetOpen by remember { mutableStateOf(false) }
 
     // Gallery picker launcher
@@ -129,7 +127,6 @@ fun TransactionForm(
             }
         }
     }
-    // Gallery permission launcher
     val galleryPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -181,7 +178,6 @@ fun TransactionForm(
         }
     }
 
-    // Auto model fill for non-purchase
     LaunchedEffect(serial, type) {
         if (serial.isNotBlank() && type != "Purchase") {
             coroutineScope.launch(Dispatchers.IO) {
@@ -632,7 +628,6 @@ fun TransactionForm(
                         try {
                             val imageUrls = mutableListOf<String>()
                             if (images.isNotEmpty()) {
-                                // Upload images in background and don't block UI
                                 val storage = FirebaseStorage.getInstance().reference
                                 for ((index, uri) in images.withIndex()) {
                                     val ref = storage.child("transactions/${serial}_${System.currentTimeMillis()}_${index}.jpg")
@@ -664,9 +659,9 @@ fun TransactionForm(
 
                             val item = inventoryRepo.getItemBySerial(serial)
                             val wasSold = inventoryRepo.wasSerialSold(serial)
-                            val isInRepair = inventoryRepo.isSerialInRepair(serial) // <-- Implement this!
+                            val isInRepair = inventoryRepo.isSerialInRepair(serial) // <-- Implement this in your repo!
 
-                            // --- Business rules ---
+                            // Business rules
                             if (type == "Sale" && (item == null || item.quantity < (quantityInt ?: 1))) {
                                 snackbarHostState.showSnackbar("Cannot sell: item not in inventory or insufficient stock.")
                                 loading = false
@@ -711,9 +706,7 @@ fun TransactionForm(
                                 // If returning a sold item, handle as per your existing logic (e.g., increase inventory)
                             }
 
-                            // --- Save transaction ---
                             val result = inventoryRepo.addTransaction(serial, transaction)
-
                             if (result is Result.Success) {
                                 if (type == "Purchase") {
                                     val newItem = InventoryItem(
