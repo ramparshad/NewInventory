@@ -46,7 +46,8 @@ fun TransactionHistoryScreen(
     inventoryRepo: InventoryRepository,
     navController: NavController? = null,
     userRole: UserRole,
-    navToBarcodeScanner: (() -> Unit)? = null
+    navToBarcodeScanner: (() -> Unit)? = null,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -125,7 +126,8 @@ fun TransactionHistoryScreen(
             TopAppBar(
                 title = { Text("Transaction History") }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -217,7 +219,6 @@ fun TransactionHistoryScreen(
                                 "return" -> Color(0xFFBDBDBD)
                                 else -> MaterialTheme.colorScheme.surface
                             }
-                            // FIX: removed deletedInfo parameter
                         )
                     }
                 }
@@ -281,7 +282,6 @@ fun TransactionHistoryScreen(
                                 )
                             }
                         }
-                        // Amount Range Section (add if needed)
                     }
                 },
                 confirmButton = {
@@ -445,9 +445,15 @@ fun TransactionHistoryScreen(
                                     downloadImage(context, url, fileName,
                                         onDownloadComplete = {
                                             downloading = false
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Image downloaded to Pictures directory")
+                                            }
                                         },
                                         onDownloadError = {
                                             downloading = false
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Failed to download image")
+                                            }
                                         }
                                     )
                                 }
@@ -500,3 +506,16 @@ fun TransactionHistoryScreen(
         }
     }
 }
+
+/*
+Where will the image be stored?
+--------------------------------
+The image will be downloaded to the app's external files directory for pictures.
+
+More specifically:
+- The directory: context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+- The file name: "transaction_image_<timestamp>.jpg"
+- Absolute path will usually be: /storage/emulated/0/Android/data/<your.package.name>/files/Pictures/transaction_image_<timestamp>.jpg
+
+If you want the image to appear in the device's gallery, MediaStore API should be used. The current implementation stores it in the app's private pictures directory.
+*/
