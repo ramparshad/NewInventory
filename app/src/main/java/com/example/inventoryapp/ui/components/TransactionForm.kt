@@ -5,7 +5,6 @@ import android.app.DatePickerDialog
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
@@ -109,49 +108,50 @@ fun TransactionForm(
         }
     }
 
-    // Permission state for gallery and camera
+    // Permissions state/messages
     var galleryDeniedReason by remember { mutableStateOf<String?>(null) }
     var cameraDeniedReason by remember { mutableStateOf<String?>(null) }
+    var imageLimitError by remember { mutableStateOf<String?>(null) }
 
-    // Image picker (gallery)
+    val maxImages = 10
+
+    // Modal bottom sheet for source selection
+    var imageSourceSheetOpen by remember { mutableStateOf(false) }
+
+    // Gallery picker launcher
     val imgPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         uris?.let {
-            val combined = images + it.take(5 - images.size)
-            images = if (combined.size > 5) combined.take(5) else combined
+            if (images.size + it.size > maxImages) {
+                imageLimitError = "You can select up to $maxImages images per transaction."
+            } else {
+                images = images + it.take(maxImages - images.size)
+                imageLimitError = null
+            }
         }
     }
-
     // Gallery permission launcher
     val galleryPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             galleryDeniedReason = null
-            imgPicker.launch(PickVisualMediaRequest())
+            imgPicker.launch(androidx.activity.result.PickVisualMediaRequest())
         } else {
-            val permission = Manifest.permission.READ_MEDIA_IMAGES
-            val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
-            val shouldShowRationale = androidx.activity.ComponentActivity::class.java
-                .isInstance(context) &&
-                (context as? androidx.activity.ComponentActivity)
-                    ?.shouldShowRequestPermissionRationale(permission) == true
-
-            galleryDeniedReason = if (shouldShowRationale) {
-                "Permission to access gallery denied. Please allow it to select images."
-            } else {
-                "Gallery access denied permanently. Please enable permission in the app settings."
-            }
-            coroutineScope.launch {
-                snackbarHostState.showSnackbar(galleryDeniedReason!!)
-            }
+            galleryDeniedReason = "Gallery access denied. Please enable permission in the app settings."
+            coroutineScope.launch { snackbarHostState.showSnackbar(galleryDeniedReason!!) }
         }
     }
 
-    // Image picker (camera)
+    // Camera launcher/permission
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success && cameraImageUri != null && images.size < 5) {
-            images = images + cameraImageUri!!
+        if (success && cameraImageUri != null) {
+            if (images.size < maxImages) {
+                images = images + cameraImageUri!!
+                imageLimitError = null
+            } else {
+                imageLimitError = "You can select up to $maxImages images per transaction."
+            }
         }
     }
     fun createCameraImageUri(): Uri {
@@ -176,21 +176,8 @@ fun TransactionForm(
             cameraImageUri = uri
             cameraLauncher.launch(uri)
         } else {
-            val permission = Manifest.permission.CAMERA
-            val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
-            val shouldShowRationale = androidx.activity.ComponentActivity::class.java
-                .isInstance(context) &&
-                (context as? androidx.activity.ComponentActivity)
-                    ?.shouldShowRequestPermissionRationale(permission) == true
-
-            cameraDeniedReason = if (shouldShowRationale) {
-                "Camera permission denied. Please allow access to use camera features."
-            } else {
-                "Camera access denied permanently. Please enable permission in the app settings."
-            }
-            coroutineScope.launch {
-                snackbarHostState.showSnackbar(cameraDeniedReason!!)
-            }
+            cameraDeniedReason = "Camera access denied. Please enable permission in the app settings."
+            coroutineScope.launch { snackbarHostState.showSnackbar(cameraDeniedReason!!) }
         }
     }
 
@@ -497,63 +484,76 @@ fun TransactionForm(
 
             Spacer(Modifier.height(10.dp))
 
-            // Gallery and Camera pickers
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = {
-                        val permission = Manifest.permission.READ_MEDIA_IMAGES
-                        val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
-                        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
-                            galleryDeniedReason = null
-                            imgPicker.launch(PickVisualMediaRequest())
-                        } else {
-                            galleryPermissionLauncher.launch(permission)
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    enabled = images.size < 5 && canEdit && !loading,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color(0xFFFAF8F4)
-                    )
+            // Merged image source picker button
+            OutlinedButton(
+                onClick = { imageSourceSheetOpen = true },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = images.size < maxImages && canEdit && !loading,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color(0xFFFAF8F4)
+                )
+            ) {
+                Icon(Icons.Filled.PhotoLibrary, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(6.dp))
+                Text("Add Images", color = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(6.dp))
+                Text("${images.size}/$maxImages", color = Color.Gray)
+            }
+
+            // Modal sheet for selecting source
+            if (imageSourceSheetOpen) {
+                ModalBottomSheet(
+                    onDismissRequest = { imageSourceSheetOpen = false },
+                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
                 ) {
-                    Icon(Icons.Filled.PhotoLibrary, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(6.dp))
-                    Text("Gallery", color = MaterialTheme.colorScheme.primary)
-                }
-                OutlinedButton(
-                    onClick = {
-                        val permission = Manifest.permission.CAMERA
-                        val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
-                        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
-                            cameraDeniedReason = null
-                            val uri = createCameraImageUri()
-                            cameraImageUri = uri
-                            cameraLauncher.launch(uri)
-                        } else {
-                            cameraPermissionLauncher.launch(permission)
+                    ListItem(
+                        headlineContent = { Text("Take Photo") },
+                        leadingContent = { Icon(Icons.Filled.CameraAlt, contentDescription = null) },
+                        modifier = Modifier.clickable {
+                            imageSourceSheetOpen = false
+                            val permission = Manifest.permission.CAMERA
+                            val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
+                            if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
+                                cameraDeniedReason = null
+                                val uri = createCameraImageUri()
+                                cameraImageUri = uri
+                                cameraLauncher.launch(uri)
+                            } else {
+                                cameraPermissionLauncher.launch(permission)
+                            }
                         }
-                    },
-                    modifier = Modifier.weight(1f),
-                    enabled = images.size < 5 && canEdit && !loading,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = Color(0xFFFAF8F4)
                     )
-                ) {
-                    Icon(Icons.Filled.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(6.dp))
-                    Text("Camera", color = MaterialTheme.colorScheme.primary)
+                    ListItem(
+                        headlineContent = { Text("Choose from Gallery") },
+                        leadingContent = { Icon(Icons.Filled.PhotoLibrary, contentDescription = null) },
+                        modifier = Modifier.clickable {
+                            imageSourceSheetOpen = false
+                            val permission = Manifest.permission.READ_MEDIA_IMAGES
+                            val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
+                            if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
+                                galleryDeniedReason = null
+                                imgPicker.launch(androidx.activity.result.PickVisualMediaRequest())
+                            } else {
+                                galleryPermissionLauncher.launch(permission)
+                            }
+                        }
+                    )
                 }
             }
 
-            // Show permission snackbar reasons for gallery/camera
+            // Show permission/image errors
             galleryDeniedReason?.let { reason ->
                 LaunchedEffect(reason) {
                     snackbarHostState.showSnackbar(reason)
                 }
             }
             cameraDeniedReason?.let { reason ->
+                LaunchedEffect(reason) {
+                    snackbarHostState.showSnackbar(reason)
+                }
+            }
+            imageLimitError?.let { reason ->
                 LaunchedEffect(reason) {
                     snackbarHostState.showSnackbar(reason)
                 }
@@ -663,36 +663,58 @@ fun TransactionForm(
                             )
 
                             val item = inventoryRepo.getItemBySerial(serial)
-                            // Sale: prevent selling more than in stock
+                            val wasSold = inventoryRepo.wasSerialSold(serial)
+                            val isInRepair = inventoryRepo.isSerialInRepair(serial) // <-- Implement this!
+
+                            // --- Business rules ---
                             if (type == "Sale" && (item == null || item.quantity < (quantityInt ?: 1))) {
                                 snackbarHostState.showSnackbar("Cannot sell: item not in inventory or insufficient stock.")
                                 loading = false
                                 return@launch
                             }
-                            // Purchase: prevent duplicate serial
                             if (type == "Purchase" && item != null) {
                                 snackbarHostState.showSnackbar("Cannot purchase: serial already exists in inventory.")
                                 loading = false
                                 return@launch
                             }
-                            // Repair: only if serial exists
-                            if (type == "Repair" && item == null) {
-                                snackbarHostState.showSnackbar("Cannot repair: serial not in inventory.")
-                                loading = false
-                                return@launch
+                            if (type == "Repair") {
+                                if (item == null) {
+                                    snackbarHostState.showSnackbar("Cannot repair: serial not in inventory.")
+                                    loading = false
+                                    return@launch
+                                }
+                                // Remove item from inventory (moves to 'in repair')
+                                inventoryRepo.removeItemBySerial(serial)
                             }
-                            // Return: only if sold previously
-                            val wasSold = inventoryRepo.wasSerialSold(serial)
-                            if (type == "Return" && !wasSold) {
-                                snackbarHostState.showSnackbar("Cannot return: item not sold previously.")
-                                loading = false
-                                return@launch
+                            if (type == "Return") {
+                                if (!wasSold && !isInRepair) {
+                                    snackbarHostState.showSnackbar("Cannot return: item not sold or in repair.")
+                                    loading = false
+                                    return@launch
+                                }
+                                // If returning from repair, add back to inventory
+                                if (isInRepair) {
+                                    val repairedItem = InventoryItem(
+                                        serial = serial,
+                                        name = model,
+                                        model = model,
+                                        quantity = quantityInt ?: 1,
+                                        phone = phone,
+                                        aadhaar = aadhaar,
+                                        description = description,
+                                        date = date,
+                                        timestamp = System.currentTimeMillis(),
+                                        imageUrls = imageUrls
+                                    )
+                                    inventoryRepo.addOrUpdateItem(serial, repairedItem)
+                                }
+                                // If returning a sold item, handle as per your existing logic (e.g., increase inventory)
                             }
 
+                            // --- Save transaction ---
                             val result = inventoryRepo.addTransaction(serial, transaction)
 
                             if (result is Result.Success) {
-                                // Inventory update for Purchase
                                 if (type == "Purchase") {
                                     val newItem = InventoryItem(
                                         serial = serial,
@@ -708,7 +730,6 @@ fun TransactionForm(
                                     )
                                     inventoryRepo.addOrUpdateItem(serial, newItem)
                                 }
-                                // Inventory update for Sale
                                 if (type == "Sale" && item != null) {
                                     val updatedQty = item.quantity - (quantityInt ?: 1)
                                     val updatedItem = item.copy(quantity = updatedQty.coerceAtLeast(0))
