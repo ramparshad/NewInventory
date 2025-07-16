@@ -61,7 +61,7 @@ fun TransactionScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("New Transaction") },
+                title = { Text("MG Inventory Management") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(

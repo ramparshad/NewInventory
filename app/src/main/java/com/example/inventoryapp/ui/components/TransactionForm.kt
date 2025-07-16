@@ -109,6 +109,10 @@ fun TransactionForm(
         }
     }
 
+    // Permission state for gallery and camera
+    var galleryDeniedReason by remember { mutableStateOf<String?>(null) }
+    var cameraDeniedReason by remember { mutableStateOf<String?>(null) }
+
     // Image picker (gallery)
     val imgPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         uris?.let {
@@ -117,8 +121,31 @@ fun TransactionForm(
         }
     }
 
-    // Camera permission state
-    var cameraDeniedReason by remember { mutableStateOf<String?>(null) }
+    // Gallery permission launcher
+    val galleryPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            galleryDeniedReason = null
+            imgPicker.launch(PickVisualMediaRequest())
+        } else {
+            val permission = Manifest.permission.READ_MEDIA_IMAGES
+            val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
+            val shouldShowRationale = androidx.activity.ComponentActivity::class.java
+                .isInstance(context) &&
+                (context as? androidx.activity.ComponentActivity)
+                    ?.shouldShowRequestPermissionRationale(permission) == true
+
+            galleryDeniedReason = if (shouldShowRationale) {
+                "Permission to access gallery denied. Please allow it to select images."
+            } else {
+                "Gallery access denied permanently. Please enable permission in the app settings."
+            }
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(galleryDeniedReason!!)
+            }
+        }
+    }
 
     // Image picker (camera)
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -154,12 +181,12 @@ fun TransactionForm(
             val shouldShowRationale = androidx.activity.ComponentActivity::class.java
                 .isInstance(context) &&
                 (context as? androidx.activity.ComponentActivity)
-                    ?.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) == true
+                    ?.shouldShowRequestPermissionRationale(permission) == true
 
             cameraDeniedReason = if (shouldShowRationale) {
-                "Camera permission denied. You denied the permission. Please allow it to use the camera."
+                "Camera permission denied. Please allow access to use camera features."
             } else {
-                "Camera permission denied permanently. Please enable it in app settings."
+                "Camera access denied permanently. Please enable permission in the app settings."
             }
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(cameraDeniedReason!!)
@@ -473,7 +500,16 @@ fun TransactionForm(
             // Gallery and Camera pickers
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
-                    onClick = { imgPicker.launch(PickVisualMediaRequest()) },
+                    onClick = {
+                        val permission = Manifest.permission.READ_MEDIA_IMAGES
+                        val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
+                        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
+                            galleryDeniedReason = null
+                            imgPicker.launch(PickVisualMediaRequest())
+                        } else {
+                            galleryPermissionLauncher.launch(permission)
+                        }
+                    },
                     modifier = Modifier.weight(1f),
                     enabled = images.size < 5 && canEdit && !loading,
                     shape = RoundedCornerShape(16.dp),
@@ -511,6 +547,12 @@ fun TransactionForm(
                 }
             }
 
+            // Show permission snackbar reasons for gallery/camera
+            galleryDeniedReason?.let { reason ->
+                LaunchedEffect(reason) {
+                    snackbarHostState.showSnackbar(reason)
+                }
+            }
             cameraDeniedReason?.let { reason ->
                 LaunchedEffect(reason) {
                     snackbarHostState.showSnackbar(reason)
