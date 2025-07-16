@@ -43,6 +43,7 @@ import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.InventoryItem
 import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.model.UserRole
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -94,7 +95,7 @@ fun TransactionForm(
     val descriptionFocus = remember { FocusRequester() }
     val quantityFocus = remember { FocusRequester() }
 
-    // For model suggestions
+    // Model suggestions
     var modelSuggestions by remember { mutableStateOf<List<String>>(emptyList()) }
     LaunchedEffect(model) {
         if (model.isNotBlank()) {
@@ -105,12 +106,15 @@ fun TransactionForm(
         }
     }
 
-    // For image picker (gallery)
+    // Image picker (gallery)
     val imgPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
-        images = uris?.take(5) ?: emptyList()
+        uris?.let {
+            val combined = images + it.take(5 - images.size)
+            images = if (combined.size > 5) combined.take(5) else combined
+        }
     }
 
-    // For image picker (camera)
+    // Image picker (camera)
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && cameraImageUri != null && images.size < 5) {
@@ -143,7 +147,32 @@ fun TransactionForm(
         }
     }
 
-    fun isDateValid(selected: Calendar): Boolean = !selected.after(Calendar.getInstance())
+    // Date picker dialog
+    var datePickerDialogOpen by remember { mutableStateOf(false) }
+    if (datePickerDialogOpen) {
+        val calendar = Calendar.getInstance()
+        val parts = date.split("-")
+        val year = parts.getOrNull(0)?.toIntOrNull() ?: calendar.get(Calendar.YEAR)
+        val month = (parts.getOrNull(1)?.toIntOrNull() ?: (calendar.get(Calendar.MONTH) + 1)) - 1
+        val day = parts.getOrNull(2)?.toIntOrNull() ?: calendar.get(Calendar.DAY_OF_MONTH)
+        DatePickerDialog(
+            context,
+            { _, y, m, d ->
+                val selectedCal = Calendar.getInstance()
+                selectedCal.set(y, m, d)
+                if (!selectedCal.after(Calendar.getInstance())) {
+                    date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedCal.time)
+                } else {
+                    coroutineScope.launch { snackbarHostState.showSnackbar("Future dates are not allowed.") }
+                }
+                datePickerDialogOpen = false
+            },
+            year, month, day
+        ).apply {
+            datePicker.maxDate = calendar.timeInMillis
+        }.show()
+    }
+
     fun formatPhone(input: String) = input.filter { it.isDigit() }.take(10)
     fun formatAadhaar(input: String) = input.filter { it.isDigit() }.take(12)
     val canEdit = userRole == UserRole.ADMIN || userRole == UserRole.STAFF
@@ -175,7 +204,7 @@ fun TransactionForm(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // Segmented button for transaction types
+            // Transaction type segmented buttons
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -250,7 +279,7 @@ fun TransactionForm(
                     .fillMaxWidth()
                     .focusRequester(modelFocus),
                 singleLine = true,
-                enabled = canEdit && !loading, // <-- FIX: allow model always editable
+                enabled = canEdit && !loading,
                 isError = modelError != null,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
@@ -260,7 +289,6 @@ fun TransactionForm(
             )
             modelError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = MaterialTheme.typography.bodySmall.fontSize) }
 
-            // Model suggestions
             AnimatedVisibility(modelSuggestions.isNotEmpty()) {
                 Card(
                     modifier = Modifier
@@ -369,28 +397,7 @@ fun TransactionForm(
             )
 
             OutlinedButton(
-                onClick = {
-                    val calendar = Calendar.getInstance()
-                    DatePickerDialog(
-                        context,
-                        { _, year, month, dayOfMonth ->
-                            val picked = Calendar.getInstance()
-                            picked.set(year, month, dayOfMonth)
-                            if (isDateValid(picked)) {
-                                date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(picked.time)
-                            } else {
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("Future dates are not allowed.")
-                                }
-                            }
-                        },
-                        calendar.get(Calendar.YEAR),
-                        calendar.get(Calendar.MONTH),
-                        calendar.get(Calendar.DAY_OF_MONTH)
-                    ).apply {
-                        datePicker.maxDate = System.currentTimeMillis()
-                    }.show()
-                },
+                onClick = { datePickerDialogOpen = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
@@ -434,9 +441,7 @@ fun TransactionForm(
             // Gallery and Camera pickers
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
-                    onClick = {
-                        imgPicker.launch(PickVisualMediaRequest())
-                    },
+                    onClick = { imgPicker.launch(PickVisualMediaRequest()) },
                     modifier = Modifier.weight(1f),
                     enabled = images.size < 5 && canEdit && !loading,
                     shape = RoundedCornerShape(16.dp),
@@ -496,15 +501,14 @@ fun TransactionForm(
 
             Spacer(Modifier.height(20.dp))
 
-            // -- VALIDATION & LOGIC --
             Button(
                 onClick = {
                     serialError = null
                     modelError = null
                     amountError = null
                     quantityError = null
-                    var valid = true
 
+                    var valid = true
                     if ("serial" in requiredFields && serial.isBlank()) {
                         serialError = "Serial is required"
                         valid = false
@@ -541,7 +545,8 @@ fun TransactionForm(
                         try {
                             val imageUrls = mutableListOf<String>()
                             if (images.isNotEmpty()) {
-                                val storage = com.google.firebase.storage.FirebaseStorage.getInstance().reference
+                                // Upload images in background and don't block UI
+                                val storage = FirebaseStorage.getInstance().reference
                                 for ((index, uri) in images.withIndex()) {
                                     val ref = storage.child("transactions/${serial}_${System.currentTimeMillis()}_${index}.jpg")
                                     ref.putFile(uri).await()
