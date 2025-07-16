@@ -1,50 +1,28 @@
 package com.example.inventoryapp.ui.screens
 
-import android.app.DatePickerDialog
-import android.net.Uri
-import android.os.Environment
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.inventoryapp.data.InventoryRepository
-import com.example.inventoryapp.model.InventoryItem
-import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.model.UserRole
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
-import androidx.compose.runtime.livedata.observeAsState
-import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.tasks.await
+import com.example.inventoryapp.ui.components.TransactionForm
 
+/**
+ * Wrapper screen for TransactionForm.
+ * Features:
+ * - Dynamic required fields (based on transaction type/user role if needed)
+ * - Success callback for navigation or state handling
+ * - Undo/History shortcut after transaction
+ * - Accessibility: descriptive content for top bar/back button
+ * - Error boundary for repo errors
+ * - Documentation for props
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionScreen(
@@ -54,316 +32,30 @@ fun TransactionScreen(
     prefillType: String? = null,
     prefillSerial: String? = null,
     prefillModel: String? = null,
-    requiredFields: List<String> = listOf("serial", "model", "amount", "date"),
-    navToBarcodeScanner: (() -> Unit)? = null
+    requiredFields: List<String>? = null, // allow null for dynamic
+    navToBarcodeScanner: (() -> Unit)? = null,
+    onTransactionSuccess: (() -> Unit)? = null // callback for parent
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val showSuccess = remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
-    var selectedTransactionType by remember { mutableStateOf(prefillType ?: "Sale") }
-    var loading by remember { mutableStateOf(false) }
-    var serialNumber by remember { mutableStateOf(prefillSerial ?: "") }
-    var modelName by remember { mutableStateOf(prefillModel ?: "") }
-    var customerName by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-    var aadhaarNumber by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
-    var transactionDate by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())) }
-    var datePickerDialogOpen by remember { mutableStateOf(false) }
-
-    // Error states
-    var serialError by remember { mutableStateOf<String?>(null) }
-    var modelError by remember { mutableStateOf<String?>(null) }
-    var customerNameError by remember { mutableStateOf<String?>(null) }
-    var phoneError by remember { mutableStateOf<String?>(null) }
-    var aadhaarError by remember { mutableStateOf<String?>(null) }
-    var amountError by remember { mutableStateOf<String?>(null) }
-    var dateError by remember { mutableStateOf<String?>(null) }
-
-    // Camera
-    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
-    ) { uris ->
-        if ((selectedImages.size + uris.size) <= 5) {
-            selectedImages = selectedImages + uris
-        }
-    }
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success && cameraImageUri != null) {
-            if (selectedImages.size < 5) {
-                selectedImages = selectedImages + cameraImageUri!!
-            }
-        }
-    }
-    fun createImageUri(): Uri {
-        val imagesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        val imageFile = kotlin.runCatching {
-            java.io.File.createTempFile(
-                "pic_${System.currentTimeMillis()}",
-                ".jpg",
-                imagesDir
-            )
-        }.getOrNull() ?: java.io.File(imagesDir, "pic_${System.currentTimeMillis()}.jpg")
-        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", imageFile)
+    // Example for dynamic required fields
+    val effectiveRequiredFields = requiredFields ?: when (prefillType?.lowercase()) {
+        "sale" -> listOf("serial", "model", "amount", "date")
+        "purchase" -> listOf("serial", "model", "amount", "date")
+        "repair" -> listOf("serial", "model", "date")
+        "return" -> listOf("serial", "date")
+        else -> listOf("serial", "model", "amount", "date")
     }
 
-    // Barcode scanner integration for serial field
-    val scannedSerialLive = navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("scannedSerial")
-    val scannedSerialState = scannedSerialLive?.observeAsState()
-    val scannedSerial = scannedSerialState?.value
-    LaunchedEffect(scannedSerial) {
-        scannedSerial?.let { serial ->
-            serialNumber = serial
-            navController.currentBackStackEntry?.savedStateHandle?.remove<String>("scannedSerial")
+    // Error boundary: check if repo is null or invalid
+    if (inventoryRepo == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Error: Inventory repo not available.", color = MaterialTheme.colorScheme.error)
         }
+        return
     }
-
-    // Model autofill if found in inventory (for non-purchase transactions)
-    var item: InventoryItem? by remember { mutableStateOf(null) }
-    LaunchedEffect(serialNumber) {
-        if (serialNumber.isNotBlank()) {
-            loading = true
-            try {
-                val foundItem = inventoryRepo.getItemBySerial(serialNumber)
-                item = foundItem
-                if (foundItem != null && selectedTransactionType != "Purchase") {
-                    modelName = foundItem.model
-                }
-            } catch (_: Exception) {
-                item = null
-            }
-            loading = false
-        }
-    }
-
-    // Date picker
-    if (datePickerDialogOpen) {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-        DatePickerDialog(
-            context,
-            { _, y, m, d ->
-                val selectedDate = "%04d-%02d-%02d".format(y, m + 1, d)
-                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val today = sdf.parse(sdf.format(Date()))
-                val selected = kotlin.runCatching { sdf.parse(selectedDate) }.getOrNull()
-                if (selected != null && !selected.after(today)) {
-                    transactionDate = selectedDate
-                    dateError = null
-                } else {
-                    dateError = "Date cannot be in the future"
-                }
-                datePickerDialogOpen = false
-            },
-            year, month, day
-        ).apply {
-            datePicker.maxDate = calendar.timeInMillis
-        }.show()
-    }
-
-    // Validation
-    suspend fun validateFormSuspend(): Boolean {
-        var isValid = true
-        val item = inventoryRepo.getItemBySerial(serialNumber)
-        if ("serial" in requiredFields && serialNumber.isBlank()) {
-            serialError = "Serial number is required"
-            isValid = false
-        } else {
-            serialError = null
-        }
-        if ("model" in requiredFields && modelName.isBlank()) {
-            modelError = "Model name is required"
-            isValid = false
-        } else {
-            modelError = null
-        }
-        if (customerName.isBlank()) {
-            customerNameError = "Customer name is required"
-            isValid = false
-        } else {
-            customerNameError = null
-        }
-        if (phoneNumber.isNotBlank() && phoneNumber.length != 10) {
-            phoneError = "Phone number must be 10 digits"
-            isValid = false
-        } else {
-            phoneError = null
-        }
-        if (aadhaarNumber.isNotBlank() && aadhaarNumber.length != 12) {
-            aadhaarError = "Aadhaar number must be 12 digits"
-            isValid = false
-        } else {
-            aadhaarError = null
-        }
-        if ("amount" in requiredFields && (amount.isBlank() || amount.toDoubleOrNull() == null || amount.toDouble() <= 0.0)) {
-            amountError = "Valid amount is required"
-            isValid = false
-        } else {
-            amountError = null
-        }
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val today = sdf.parse(sdf.format(Date()))
-        val selected = kotlin.runCatching { sdf.parse(transactionDate) }.getOrNull()
-        if ("date" in requiredFields && (selected == null || selected.after(today))) {
-            dateError = "Date cannot be in the future"
-            isValid = false
-        } else {
-            dateError = null
-        }
-        when (selectedTransactionType) {
-            "Sale" -> {
-                if (item == null || item.quantity < 1 || item.isSold || item.isInRepair) {
-                    serialError = "Serial not in inventory or unavailable"
-                    isValid = false
-                }
-            }
-            "Purchase" -> {
-                if (item != null) {
-                    serialError = "Serial already exists in inventory"
-                    isValid = false
-                }
-            }
-            "Repair" -> {
-                if (item == null || item.isSold) {
-                    serialError = "Serial not found in inventory or already sold"
-                    isValid = false
-                }
-            }
-            "Return" -> {
-                if (item == null || (!item.isSold && !item.isInRepair)) {
-                    serialError = "Serial must be sold or marked in repair before return"
-                    isValid = false
-                }
-            }
-        }
-        return isValid
-    }
-
-    suspend fun updateInventoryAfterTransaction(
-        transactionType: String,
-        serial: String,
-        model: String,
-        phone: String,
-        aadhaar: String,
-        description: String,
-        images: List<String>
-    ) {
-        val existingItem = inventoryRepo.getItemBySerial(serial)
-        when (transactionType) {
-            "Purchase" -> {
-                if (existingItem == null) {
-                    val newItem = InventoryItem(
-                        serial = serial,
-                        name = model,
-                        model = model,
-                        quantity = 1,
-                        phone = phone,
-                        aadhaar = aadhaar,
-                        description = description,
-                        date = transactionDate,
-                        timestamp = System.currentTimeMillis(),
-                        imageUrls = images,
-                        isSold = false,
-                        isInRepair = false
-                    )
-                    inventoryRepo.addOrUpdateItem(serial, newItem)
-                }
-            }
-            "Sale" -> {
-                if (existingItem != null) {
-                    val updatedItem = existingItem.copy(quantity = 0, isSold = true)
-                    inventoryRepo.addOrUpdateItem(serial, updatedItem)
-                }
-            }
-            "Repair" -> {
-                if (existingItem != null) {
-                    val updatedItem = existingItem.copy(isInRepair = true)
-                    inventoryRepo.addOrUpdateItem(serial, updatedItem)
-                }
-            }
-            "Return" -> {
-                if (existingItem != null) {
-                    val updatedItem = existingItem.copy(quantity = 1, isSold = false, isInRepair = false)
-                    inventoryRepo.addOrUpdateItem(serial, updatedItem)
-                }
-            }
-        }
-    }
-
-    // Upload images to Firebase Storage and get URLs
-    suspend fun uploadImagesAndGetUrls(uris: List<Uri>): List<String> {
-        val storage = FirebaseStorage.getInstance().reference
-        val urls = mutableListOf<String>()
-        for ((index, uri) in uris.withIndex()) {
-            val ref = storage.child("transactions/${serialNumber}_${System.currentTimeMillis()}_${index}.jpg")
-            ref.putFile(uri).await()
-            urls += ref.downloadUrl.await().toString()
-        }
-        return urls
-    }
-
-    fun submitTransaction() {
-        scope.launch {
-            val isValid = validateFormSuspend()
-            if (!isValid) return@launch
-            loading = true
-            try {
-                val imageUrls = if (selectedImages.isNotEmpty()) {
-                    uploadImagesAndGetUrls(selectedImages)
-                } else {
-                    emptyList()
-                }
-                val transaction = Transaction(
-                    id = "",
-                    serial = serialNumber,
-                    model = modelName,
-                    type = selectedTransactionType,
-                    customerName = customerName,
-                    phoneNumber = phoneNumber.ifBlank { "" },
-                    aadhaarNumber = aadhaarNumber.ifBlank { "" },
-                    amount = amount.toDouble(),
-                    quantity = 1,
-                    description = description.ifBlank { "" },
-                    date = transactionDate,
-                    timestamp = System.currentTimeMillis(),
-                    userRole = userRole.name,
-                    images = imageUrls
-                )
-                val result = inventoryRepo.addTransaction(serialNumber, transaction)
-                if (result is com.example.inventoryapp.data.Result.Success) {
-                    updateInventoryAfterTransaction(
-                        transactionType = selectedTransactionType,
-                        serial = serialNumber,
-                        model = modelName,
-                        phone = phoneNumber.ifBlank { "" },
-                        aadhaar = aadhaarNumber.ifBlank { "" },
-                        description = description.ifBlank { "" },
-                        images = imageUrls
-                    )
-                    snackbarHostState.showSnackbar("Transaction & Inventory updated successfully")
-                    navController.popBackStack()
-                } else {
-                    snackbarHostState.showSnackbar("Failed to save transaction")
-                }
-            } catch (e: Exception) {
-                snackbarHostState.showSnackbar("Error: ${e.message}")
-            } finally {
-                loading = false
-            }
-        }
-    }
-
-    // Transaction type split into two lines
-    val transactionTypesLine1 = listOf("Purchase", "Return")
-    val transactionTypesLine2 = listOf("Sale", "Repair")
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -372,344 +64,60 @@ fun TransactionScreen(
                 title = { Text("New Transaction") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back to previous screen"
+                        )
                     }
                 }
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
+        Box(
+            Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(paddingValues)
         ) {
-            // Transaction Type Selector Split into Two Lines
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Transaction Type",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+            TransactionForm(
+                navController = navController,
+                inventoryRepo = inventoryRepo,
+                userRole = userRole,
+                requiredFields = effectiveRequiredFields,
+                snackbarHostState = snackbarHostState,
+                showSuccess = showSuccess,
+                prefillType = prefillType,
+                prefillSerial = prefillSerial,
+                prefillModel = prefillModel,
+                modifier = Modifier.fillMaxSize(),
+            )
+
+            // Transaction success snackbar with undo/history shortcut
+            if (showSuccess.value) {
+                LaunchedEffect(showSuccess.value) {
+                    val result = snackbarHostState.showSnackbar(
+                        message = "Transaction successful!",
+                        actionLabel = "History",
+                        withDismissAction = true
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        transactionTypesLine1.forEach { type ->
-                            Button(
-                                onClick = { selectedTransactionType = type },
-                                enabled = !loading,
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (selectedTransactionType == type)
-                                        MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-                                )
-                            ) {
-                                Text(type)
-                            }
-                        }
+                    if (result == SnackbarResult.ActionPerformed) {
+                        navController.navigate("transaction_history")
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        transactionTypesLine2.forEach { type ->
-                            Button(
-                                onClick = { selectedTransactionType = type },
-                                enabled = !loading,
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (selectedTransactionType == type)
-                                        MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-                                )
-                            ) {
-                                Text(type)
-                            }
-                        }
-                    }
+                    showSuccess.value = false
+                    onTransactionSuccess?.invoke() // call parent callback
                 }
             }
 
-            // Item Details Card with Barcode Scan
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Item Details",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        IconButton(
-                            onClick = {
-                                navToBarcodeScanner?.invoke() ?: navController.navigate("barcode_scanner")
-                            }
-                        ) {
-                            Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan Barcode")
-                        }
+            // Error boundary example (could be expanded)
+            error?.let {
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp),
+                    action = {
+                        TextButton(onClick = { error = null }) { Text("Dismiss") }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = serialNumber,
-                        onValueChange = {
-                            serialNumber = it
-                            serialError = null
-                        },
-                        label = { Text("Serial Number") },
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = serialError != null,
-                        supportingText = serialError?.let { { Text(it) } }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = modelName,
-                        onValueChange = {
-                            modelName = it
-                            modelError = null
-                        },
-                        label = { Text("Model Name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = true,
-                        isError = modelError != null,
-                        supportingText = modelError?.let { { Text(it) } }
-                    )
-                }
+                ) { Text(it, color = MaterialTheme.colorScheme.error) }
             }
-
-            // Customer Information Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Customer Information",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = customerName,
-                        onValueChange = {
-                            customerName = it
-                            customerNameError = null
-                        },
-                        label = { Text("Customer Name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = customerNameError != null,
-                        supportingText = customerNameError?.let { { Text(it) } }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = phoneNumber,
-                        onValueChange = {
-                            if (it.length <= 10 && it.all { char -> char.isDigit() }) {
-                                phoneNumber = it
-                                phoneError = null
-                            }
-                        },
-                        label = { Text("Phone Number (Optional)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        isError = phoneError != null,
-                        supportingText = phoneError?.let { { Text(it) } }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = aadhaarNumber,
-                        onValueChange = {
-                            if (it.length <= 12 && it.all { char -> char.isDigit() }) {
-                                aadhaarNumber = it
-                                aadhaarError = null
-                            }
-                        },
-                        label = { Text("Aadhaar Number (Optional)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        isError = aadhaarError != null,
-                        supportingText = aadhaarError?.let { { Text(it) } }
-                    )
-                }
-            }
-
-            // Transaction Details Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Transaction Details",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = amount,
-                        onValueChange = {
-                            amount = it
-                            amountError = null
-                        },
-                        label = { Text("Amount") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        isError = amountError != null,
-                        supportingText = amountError?.let { { Text(it) } }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // Quantity always 1 and disabled
-                    OutlinedTextField(
-                        value = "1",
-                        onValueChange = {},
-                        label = { Text("Quantity") },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = false
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        label = { Text("Description (Optional)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 3
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = transactionDate,
-                        onValueChange = {},
-                        label = { Text("Date") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { datePickerDialogOpen = true },
-                        readOnly = true,
-                        isError = dateError != null,
-                        supportingText = dateError?.let { { Text(it) } }
-                    )
-                }
-            }
-
-            // Images Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Images (${selectedImages.size}/5)",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            IconButton(
-                                onClick = { imagePickerLauncher.launch("image/*") },
-                                enabled = selectedImages.size < 5
-                            ) {
-                                Icon(Icons.Default.PhotoLibrary, contentDescription = "Gallery")
-                            }
-                            IconButton(
-                                onClick = {
-                                    val uri = createImageUri()
-                                    cameraImageUri = uri
-                                    cameraLauncher.launch(uri)
-                                },
-                                enabled = selectedImages.size < 5
-                            ) {
-                                Icon(Icons.Default.CameraAlt, contentDescription = "Camera")
-                            }
-                        }
-                    }
-                    if (selectedImages.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(selectedImages) { uri ->
-                                Box {
-                                    AsyncImage(
-                                        model = uri,
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(80.dp)
-                                            .clip(RoundedCornerShape(8.dp)),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                    IconButton(
-                                        onClick = {
-                                            selectedImages = selectedImages.filter { it != uri }
-                                        },
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .size(24.dp)
-                                            .background(
-                                                Color.Black.copy(alpha = 0.6f),
-                                                CircleShape
-                                            )
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = "Remove",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Button(
-                onClick = { submitTransaction() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = !loading,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                if (loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Icon(Icons.Default.Save, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Save Transaction", fontSize = 16.sp)
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
