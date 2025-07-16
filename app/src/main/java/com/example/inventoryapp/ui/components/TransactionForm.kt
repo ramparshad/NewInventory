@@ -1,6 +1,8 @@
 package com.example.inventoryapp.ui.components
 
+import android.Manifest
 import android.app.DatePickerDialog
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -37,6 +39,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import coil.compose.rememberAsyncImagePainter
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
@@ -114,6 +117,9 @@ fun TransactionForm(
         }
     }
 
+    // Camera permission state
+    var cameraDeniedReason by remember { mutableStateOf<String?>(null) }
+
     // Image picker (camera)
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -133,6 +139,32 @@ fun TransactionForm(
             "${context.packageName}.fileprovider",
             imageFile
         )
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraDeniedReason = null
+            val uri = createCameraImageUri()
+            cameraImageUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            val permission = Manifest.permission.CAMERA
+            val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
+            val shouldShowRationale = androidx.activity.ComponentActivity::class.java
+                .isInstance(context) &&
+                (context as? androidx.activity.ComponentActivity)
+                    ?.shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) == true
+
+            cameraDeniedReason = if (shouldShowRationale) {
+                "Camera permission denied. You denied the permission. Please allow it to use the camera."
+            } else {
+                "Camera permission denied permanently. Please enable it in app settings."
+            }
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(cameraDeniedReason!!)
+            }
+        }
     }
 
     // Auto model fill for non-purchase
@@ -455,9 +487,16 @@ fun TransactionForm(
                 }
                 OutlinedButton(
                     onClick = {
-                        val uri = createCameraImageUri()
-                        cameraImageUri = uri
-                        cameraLauncher.launch(uri)
+                        val permission = Manifest.permission.CAMERA
+                        val permissionStatus = ContextCompat.checkSelfPermission(context, permission)
+                        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
+                            cameraDeniedReason = null
+                            val uri = createCameraImageUri()
+                            cameraImageUri = uri
+                            cameraLauncher.launch(uri)
+                        } else {
+                            cameraPermissionLauncher.launch(permission)
+                        }
                     },
                     modifier = Modifier.weight(1f),
                     enabled = images.size < 5 && canEdit && !loading,
@@ -469,6 +508,12 @@ fun TransactionForm(
                     Icon(Icons.Filled.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(6.dp))
                     Text("Camera", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+
+            cameraDeniedReason?.let { reason ->
+                LaunchedEffect(reason) {
+                    snackbarHostState.showSnackbar(reason)
                 }
             }
 
