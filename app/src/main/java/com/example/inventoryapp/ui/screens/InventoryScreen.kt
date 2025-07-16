@@ -254,14 +254,22 @@ fun InventoryScreen(
                             onClick = {
                                 downloading = true
                                 val url = photoViewerImages.getOrNull(photoViewerStartIndex)
-                                url?.let { downloadImage(context, it, "inventory_image_${System.currentTimeMillis()}.jpg",
-                                    onDownloadComplete = {
-                                        downloading = false
-                                    },
-                                    onDownloadError = {
-                                        downloading = false
-                                    }
-                                ) }
+                                url?.let { 
+                                    downloadImage(context, it, "inventory_image_${System.currentTimeMillis()}.jpg",
+                                        onDownloadComplete = {
+                                            downloading = false
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Image downloaded to Pictures directory")
+                                            }
+                                        },
+                                        onDownloadError = {
+                                            downloading = false
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Failed to download image")
+                                            }
+                                        }
+                                    ) 
+                                }
                             },
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
