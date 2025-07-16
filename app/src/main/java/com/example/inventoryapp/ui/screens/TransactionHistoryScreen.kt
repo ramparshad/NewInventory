@@ -32,11 +32,9 @@ import com.example.inventoryapp.data.InventoryRepository
 import com.example.inventoryapp.data.Result
 import com.example.inventoryapp.model.Transaction
 import com.example.inventoryapp.model.UserRole
-import com.example.inventoryapp.utils.downloadImage
+import com.example.inventoryapp.utils.downloadImageToGallery
 import com.example.inventoryapp.ui.components.TransactionHistoryCard
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -441,21 +439,25 @@ fun TransactionHistoryScreen(
                             onClick = {
                                 downloading = true
                                 imgUrl?.let { url ->
-                                    val fileName = "transaction_image_${System.currentTimeMillis()}.jpg"
-                                    downloadImage(context, url, fileName,
-                                        onDownloadComplete = {
-                                            downloading = false
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar("Image downloaded to Pictures directory")
+                                    scope.launch {
+                                        downloadImageToGallery(
+                                            context = context,
+                                            url = url,
+                                            fileName = "transaction_image_${System.currentTimeMillis()}.jpg",
+                                            onDownloadComplete = {
+                                                downloading = false
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Image downloaded to gallery!")
+                                                }
+                                            },
+                                            onDownloadError = { errorMsg ->
+                                                downloading = false
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Failed to download image: $errorMsg")
+                                                }
                                             }
-                                        },
-                                        onDownloadError = {
-                                            downloading = false
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar("Failed to download image")
-                                            }
-                                        }
-                                    )
+                                        )
+                                    }
                                 }
                             },
                             enabled = !downloading
@@ -506,16 +508,3 @@ fun TransactionHistoryScreen(
         }
     }
 }
-
-/*
-Where will the image be stored?
---------------------------------
-The image will be downloaded to the app's external files directory for pictures.
-
-More specifically:
-- The directory: context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-- The file name: "transaction_image_<timestamp>.jpg"
-- Absolute path will usually be: /storage/emulated/0/Android/data/<your.package.name>/files/Pictures/transaction_image_<timestamp>.jpg
-
-If you want the image to appear in the device's gallery, MediaStore API should be used. The current implementation stores it in the app's private pictures directory.
-*/

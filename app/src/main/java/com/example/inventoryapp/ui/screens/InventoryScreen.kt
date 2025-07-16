@@ -1,10 +1,6 @@
 package com.example.inventoryapp.ui.screens
 
-import android.net.Uri
-import android.os.Environment
 import android.content.Context
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -35,15 +31,13 @@ import com.example.inventoryapp.model.InventoryFilters
 import com.example.inventoryapp.model.InventoryItem
 import com.example.inventoryapp.model.InventoryViewModel
 import com.example.inventoryapp.model.UserRole
-import com.example.inventoryapp.utils.downloadImage
+import com.example.inventoryapp.utils.downloadImageToGallery
 import com.example.inventoryapp.ui.components.InventoryCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.window.Dialog
-import java.io.File
-import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -254,21 +248,26 @@ fun InventoryScreen(
                             onClick = {
                                 downloading = true
                                 val url = photoViewerImages.getOrNull(photoViewerStartIndex)
-                                url?.let { 
-                                    downloadImage(context, it, "inventory_image_${System.currentTimeMillis()}.jpg",
-                                        onDownloadComplete = {
-                                            downloading = false
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar("Image downloaded to Pictures directory")
+                                url?.let {
+                                    scope.launch {
+                                        downloadImageToGallery(
+                                            context = context,
+                                            url = it,
+                                            fileName = "inventory_image_${System.currentTimeMillis()}.jpg",
+                                            onDownloadComplete = {
+                                                downloading = false
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Image downloaded to gallery!")
+                                                }
+                                            },
+                                            onDownloadError = { errorMsg ->
+                                                downloading = false
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Failed to download image: $errorMsg")
+                                                }
                                             }
-                                        },
-                                        onDownloadError = {
-                                            downloading = false
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar("Failed to download image")
-                                            }
-                                        }
-                                    ) 
+                                        )
+                                    }
                                 }
                             },
                             modifier = Modifier
